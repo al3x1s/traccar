@@ -24,7 +24,7 @@ import org.traccar.TrackerServer;
 import org.traccar.model.Command;
 
 import java.util.List;
-import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
+//import org.jboss.netty.handler.codec.frame.LengthFieldBasedFrameDecoder;
 
 public class TotemProtocol extends BaseProtocol {
 
@@ -41,9 +41,7 @@ public class TotemProtocol extends BaseProtocol {
         serverList.add(new TrackerServer(new ServerBootstrap(), this.getName()) {
             @Override
             protected void addSpecificHandlers(ChannelPipeline pipeline) {
-                pipeline.addLast("imageframeDecoder", new LengthFieldBasedFrameDecoder(256, 2, 2));
-                pipeline.addLast("imageDecoder", new TotemProtocolDecoder(TotemProtocol.this));
-                
+                pipeline.addLast("imageDecoder", new TotemImageProtocolDecoder(TotemProtocol.this));
                 pipeline.addLast("frameDecoder", new TotemFrameDecoder());
                 pipeline.addLast("stringEncoder", new StringEncoder());
                 pipeline.addLast("stringDecoder", new StringDecoder());
