@@ -36,6 +36,8 @@ public class TotemProtocolEncoder extends StringProtocolEncoder {
 
         switch (command.getType()) {
             //Assuming PIN 8 (Output C) is the power wire, like manual says but it can be PIN 5,7,8
+            case Command.TYPE_IDENTIFICATION:
+                return formatCommand(command, "*{%s},801#", Command.KEY_DEVICE_PASSWORD);
             case Command.TYPE_ENGINE_STOP:
                 return formatCommand(command, "*{%s},025,C,1#", Command.KEY_DEVICE_PASSWORD);
             case Command.TYPE_ENGINE_RESUME:

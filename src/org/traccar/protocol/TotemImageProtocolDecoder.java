@@ -18,23 +18,28 @@ package org.traccar.protocol;
 import java.net.SocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.traccar.BaseProtocolDecoder;
 import org.traccar.DeviceSession;
-import org.traccar.helper.Log;
 import org.traccar.helper.StringFinder;
+import org.traccar.model.Pictures;
 
 /**
  *
  * @author alexis
  */
-public class TotemImageProtocolDecoder extends BaseProtocolDecoder{
+public class TotemImageProtocolDecoder extends BaseProtocolDecoder {
+
+    private final Map<Long, Pictures> pictures = new ConcurrentHashMap<>(); // <deviceId, Picture>
+
     public TotemImageProtocolDecoder(TotemProtocol protocol) {
         super(protocol);
     }
-    
+
     @Override
     protected Object decode(
             Channel channel, SocketAddress remoteAddress, Object msg) throws Exception {
@@ -50,30 +55,35 @@ public class TotemImageProtocolDecoder extends BaseProtocolDecoder{
         } else if (beginIndex > buf.readerIndex()) {
             buf.readerIndex(beginIndex);
         }
-  
+
         buf.skipBytes(2); // header
-        String imei = buf.readBytes(15).toString(Charset.defaultCharset()); 
+        String imei = buf.readBytes(15).toString(Charset.defaultCharset());
         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, imei);
         if (deviceSession == null) {
             return null;
         }
-        
-        int picNumber =     Integer.parseInt(buf.readBytes(5).toString(StandardCharsets.US_ASCII)); 
-        int totalPackage =  Integer.parseInt(buf.readBytes(3).toString(StandardCharsets.US_ASCII));
-        int seqNumber =     Integer.parseInt(buf.readBytes(3).toString(StandardCharsets.US_ASCII));
-        
-        if(seqNumber == 1){
-            String date = buf.readBytes(12).toString(StandardCharsets.US_ASCII); 
+
+        int picNumber = Integer.parseInt(buf.readBytes(5).toString(StandardCharsets.US_ASCII));
+        int totalPackage = Integer.parseInt(buf.readBytes(3).toString(StandardCharsets.US_ASCII));
+        int seqNumber = Integer.parseInt(buf.readBytes(3).toString(StandardCharsets.US_ASCII));
+
+        Pictures pic = new Pictures(deviceSession.getDeviceId());
+        if (pictures.containsKey(deviceSession.getDeviceId())) {
+            pic = pictures.get(deviceSession.getDeviceId());
+        }
+
+        if (seqNumber == 1) {
+            String date = buf.readBytes(12).toString(StandardCharsets.US_ASCII);
             String pos = buf.readBytes(19).toString(StandardCharsets.US_ASCII);
         }
 
         int flagIndex = buf.indexOf(buf.readerIndex(), buf.writerIndex(), new StringFinder("#\r\n"));
         if ((flagIndex - buf.readerIndex()) <= buf.readableBytes()) {
-            String hs = ChannelBuffers.hexDump(buf, buf.readerIndex(), flagIndex - buf.readerIndex());
-//            System.out.println(hs);
-            Log.info(hs);
+            String hexRaw = ChannelBuffers.hexDump(buf, buf.readerIndex(), flagIndex - buf.readerIndex());
+            pic.addPackage(picNumber, totalPackage, seqNumber, hexRaw);
+            pictures.put(deviceSession.getDeviceId(), pic);
         }
-        
         return null;
     }
+
 }

@@ -460,4 +460,12 @@ public class DataManager {
                 .setLong("id", notification.getId())
                 .executeUpdate();
     }
+
+    public void saveImage(Long deviceId, String rawImage) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.insertImage"))
+                .setLong("deviceid", deviceId)
+                .setString("rawimage", rawImage)
+                .executeUpdate();
+    }
+
 }
