@@ -140,7 +140,9 @@ public class FilterHandler extends BaseDataHandler {
 
     @Override
     protected Position handlePosition(Position position) {
-        if (filter(position)) {
+        Object alarm = position.getAttributes().get(Position.KEY_ALARM);
+        Object commandResult = position.getAttributes().get(Position.KEY_RESULT);
+        if (filter(position) && alarm == null && commandResult == null) {
             return null;
         }
         return position;
