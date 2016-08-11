@@ -22,6 +22,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.traccar.Context;
 import org.traccar.api.resource.SessionResource;
+import org.traccar.helper.Log;
 
 public class AsyncSocketServlet extends WebSocketServlet {
 
@@ -37,6 +38,7 @@ public class AsyncSocketServlet extends WebSocketServlet {
                     long userId = (Long) req.getSession().getAttribute(SessionResource.USER_ID_KEY);
                     return new AsyncSocket(userId);
                 } else {
+                    Log.error("req.getSession() = null");
                     return null;
                 }
             }
