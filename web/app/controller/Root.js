@@ -20,7 +20,8 @@ Ext.define('Traccar.controller.Root', {
     requires: [
         'Traccar.view.Login',
         'Traccar.view.Main',
-        'Traccar.view.MainMobile'
+        'Traccar.view.MainMobile',
+        'Traccar.model.Position'
     ],
 
     init: function () {
@@ -33,7 +34,7 @@ Ext.define('Traccar.controller.Root', {
     onLaunch: function () {
         Ext.Ajax.request({
             scope: this,
-            url: '/api/server',
+            url: 'api/server',
             callback: this.onServerReturn
         });
     },
@@ -44,7 +45,7 @@ Ext.define('Traccar.controller.Root', {
             Traccar.app.setServer(Ext.decode(response.responseText));
             Ext.Ajax.request({
                 scope: this,
-                url: '/api/session',
+                url: 'api/session',
                 callback: this.onSessionReturn
             });
         } else {
@@ -73,6 +74,7 @@ Ext.define('Traccar.controller.Root', {
     },
 
     loadApp: function () {
+        var attribution;
         Ext.getStore('Groups').load();
         Ext.getStore('Geofences').load();
         Ext.getStore('Devices').load({
@@ -81,7 +83,7 @@ Ext.define('Traccar.controller.Root', {
                 this.asyncUpdate(true);
             }
         });
-        var attribution = Ext.get('attribution');
+        attribution = Ext.get('attribution');
         if (attribution) {
             attribution.remove();
         }
@@ -106,8 +108,8 @@ Ext.define('Traccar.controller.Root', {
 
     asyncUpdate: function (first) {
         var protocol, socket, self = this;
-        protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-        socket = new WebSocket(protocol + '//' + window.location.host + '/api/socket');
+        protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socket = new WebSocket(protocol + '//' + window.location.host + window.location.pathname + 'api/socket');
 
         socket.onclose = function (event) {
             self.asyncUpdate(false);
@@ -188,7 +190,7 @@ Ext.define('Traccar.controller.Root', {
                     if (array[i].geofenceId !== 0) {
                         geofence = Ext.getStore('Geofences').getById(array[i].geofenceId);
                         if (typeof geofence !== 'undefined') {
-                            text += ' \"' + geofence.getData().name + '"';
+                            text += ' \"' + geofence.get('name') + '"';
                         }
                     }
                     device = Ext.getStore('Devices').getById(array[i].deviceId);

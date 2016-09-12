@@ -24,7 +24,8 @@ Ext.define('Traccar.view.UsersController', {
         'Traccar.view.UserGroups',
         'Traccar.view.UserGeofences',
         'Traccar.view.Notifications',
-        'Traccar.view.BaseWindow'
+        'Traccar.view.BaseWindow',
+        'Traccar.model.User'
     ],
 
     init: function () {
@@ -77,8 +78,8 @@ Ext.define('Traccar.view.UsersController', {
                 linkObjectName: 'deviceId',
                 storeName: 'AllDevices',
                 linkStoreName: 'Devices',
-                urlApi: '/api/permissions/devices',
-                baseObject: user.getData().id
+                urlApi: 'api/permissions/devices',
+                baseObject: user.getId()
             }
         }).show();
     },
@@ -93,8 +94,8 @@ Ext.define('Traccar.view.UsersController', {
                 linkObjectName: 'groupId',
                 storeName: 'AllGroups',
                 linkStoreName: 'Groups',
-                urlApi: '/api/permissions/groups',
-                baseObject: user.getData().id
+                urlApi: 'api/permissions/groups',
+                baseObject: user.getId()
             }
         }).show();
     },
@@ -109,8 +110,8 @@ Ext.define('Traccar.view.UsersController', {
                 linkObjectName: 'geofenceId',
                 storeName: 'AllGeofences',
                 linkStoreName: 'Geofences',
-                urlApi: '/api/permissions/geofences',
-                baseObject: user.getData().id
+                urlApi: 'api/permissions/geofences',
+                baseObject: user.getId()
             }
         }).show();
     },

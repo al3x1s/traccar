@@ -308,7 +308,7 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
 
         parser.skip(4); // alternative networks
 
-        position.set(Position.KEY_ODOMETER, parser.next());
+        position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
     }
 
     private Object decodeObd(Channel channel, SocketAddress remoteAddress, String sentence) {
@@ -329,11 +329,11 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_RPM, parser.next());
         position.set(Position.KEY_OBD_SPEED, parser.next());
         position.set(Position.PREFIX_TEMP + 1, parser.next());
-        position.set("fuel-consumption", parser.next());
-        position.set("dtcs-cleared-distance", parser.next());
-        position.set("odb-connect", parser.next());
-        position.set("dtcs-number", parser.next());
-        position.set("dtcs-codes", parser.next());
+        position.set(Position.KEY_FUEL_CONSUMPTION, parser.next());
+        position.set("dtcsClearedDistance", parser.next());
+        position.set("odbConnect", parser.next());
+        position.set("dtcsNumber", parser.next());
+        position.set("dtcsCodes", parser.next());
         position.set(Position.KEY_THROTTLE, parser.next());
         position.set(Position.KEY_FUEL, parser.next());
         position.set(Position.KEY_OBD_ODOMETER, parser.next());
@@ -392,7 +392,7 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
             position.set(Position.KEY_POWER, power);
         }
 
-        position.set(Position.KEY_ODOMETER, parser.next());
+        position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
         position.set(Position.KEY_BATTERY, parser.next());
 
         position.set(Position.KEY_ODOMETER, parser.next());
@@ -446,7 +446,7 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
         decodeLocation(position, parser);
 
         position.set(Position.KEY_HOURS, parser.next());
-        position.set(Position.KEY_ODOMETER, parser.next());
+        position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
 
         if (parser.hasNext(6)) {
             DateBuilder dateBuilder = new DateBuilder()
@@ -479,7 +479,7 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
 
         decodeLocation(position, parser);
 
-        position.set(Position.KEY_ODOMETER, parser.next());
+        position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
 
         if (parser.hasNext(6)) {
             DateBuilder dateBuilder = new DateBuilder()
@@ -518,7 +518,7 @@ public class Gl200ProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_ODOMETER, parser.next());
         position.set(Position.KEY_BATTERY, parser.next());
 
-        position.set(Position.KEY_ODOMETER, parser.next());
+        position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
 
         // workaround for wrong location time
         if (parser.hasNext(6)) {

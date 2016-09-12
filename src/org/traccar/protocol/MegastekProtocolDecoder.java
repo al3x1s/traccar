@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 - 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2013 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@ public class MegastekProtocolDecoder extends BaseProtocolDecoder {
             Parser parser = new Parser(PATTERN_SIMPLE, status);
             if (parser.matches()) {
 
-                position.set(Position.KEY_ALARM, parser.next());
+                position.set(Position.KEY_ALARM, decodeAlarm(parser.next()));
 
                 DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, parser.next(), id);
                 if (deviceSession == null) {
@@ -217,7 +217,7 @@ public class MegastekProtocolDecoder extends BaseProtocolDecoder {
                 position.set(Position.PREFIX_ADC + 1, parser.next());
                 position.set(Position.PREFIX_ADC + 2, parser.next());
                 position.set(Position.PREFIX_ADC + 3, parser.next());
-                position.set(Position.KEY_ALARM, parser.next());
+                position.set(Position.KEY_ALARM, decodeAlarm(parser.next()));
 
             }
         }
@@ -241,29 +241,30 @@ public class MegastekProtocolDecoder extends BaseProtocolDecoder {
             .number("(dd),")                     // satellites
             .number("dd,")
             .number("(d+.d+),")                  // hdop
-            .number("(d+.d+),")                  // speed
-            .number("(d+.d+),")                  // course
-            .number("(d+.d+),")                  // altitude
-            .number("(d+.d+),")                  // odometer
+            .number("(d+.d+)?,")                 // speed
+            .number("(d+.d+)?,")                 // course
+            .number("(-?d+.d+),")                // altitude
+            .number("(d+.d+)?,")                 // odometer
             .number("(d+),")                     // mcc
             .number("(d+),")                     // mnc
             .number("(xxxx),")                   // lac
             .number("(xxxx),")                   // cid
             .number("(d+)?,")                    // gsm
-            .expression("([01]+),")              // input
-            .expression("([01]+),")              // output
-            .number("(d+),")                     // adc1
-            .number("(d+),")                     // adc2
-            .number("(d+),")                     // adc3
+            .expression("([01]+)?,")             // input
+            .expression("([01]+)?,")             // output
+            .number("(d+)?,")                    // adc1
+            .number("(d+)?,")                    // adc2
+            .number("(d+)?,")                    // adc3
             .groupBegin()
             .number("(-?d+.?d*)")                // temperature 1
             .or().text(" ")
-            .groupEnd().text(",")
+            .groupEnd("?").text(",")
             .groupBegin()
             .number("(-?d+.?d*)")                // temperature 2
             .or().text(" ")
-            .groupEnd().text(",")
-            .number("(d+)?,,")                   // rfid
+            .groupEnd("?").text(",")
+            .number("(d+)?,")                    // rfid
+            .number("d*,")
             .number("(d+)?,")                    // battery
             .expression("([^,]*);")              // alert
             .any()
@@ -305,17 +306,15 @@ public class MegastekProtocolDecoder extends BaseProtocolDecoder {
         position.setCourse(parser.nextDouble());
         position.setAltitude(parser.nextDouble());
 
-        position.set(Position.KEY_ODOMETER, parser.nextDouble());
+        if (parser.hasNext()) {
+            position.set(Position.KEY_ODOMETER, parser.nextDouble() * 1000);
+        }
+
         position.set(Position.KEY_MCC, parser.nextInt());
         position.set(Position.KEY_MNC, parser.nextInt());
         position.set(Position.KEY_LAC, parser.nextInt(16));
         position.set(Position.KEY_CID, parser.nextInt(16));
-
-        String gsm = parser.next();
-        if (gsm != null) {
-            position.set(Position.KEY_GSM, Integer.parseInt(gsm));
-        }
-
+        position.set(Position.KEY_GSM, parser.nextInt());
         position.set(Position.KEY_INPUT, parser.nextInt(2));
         position.set(Position.KEY_OUTPUT, parser.nextInt(2));
 
@@ -337,9 +336,39 @@ public class MegastekProtocolDecoder extends BaseProtocolDecoder {
             position.set(Position.KEY_BATTERY, Integer.parseInt(battery));
         }
 
-        position.set(Position.KEY_ALARM, parser.next());
+        position.set(Position.KEY_ALARM, decodeAlarm(parser.next()));
 
         return position;
+    }
+
+    private String decodeAlarm(String value) {
+        switch (value) {
+        case "SOS":
+        case "Help":
+            return Position.ALARM_SOS;
+        case "Over Speed":
+        case "OverSpeed":
+            return Position.ALARM_OVERSPEED;
+        case "LowSpeed":
+            return Position.ALARM_LOW_SPEED;
+        case "Low Battery":
+        case "LowBattery":
+            return Position.ALARM_LOW_BATTERY;
+        case "VIB":
+            return Position.ALARM_VIBRATION;
+        case "Move in":
+        case "Geo in":
+        case "Geo1 in":
+        case "Geo2 in":
+            return Position.ALARM_GEOFENCE_ENTER;
+        case "Move out":
+        case "Geo out":
+        case "Geo1 out":
+        case "Geo2 out":
+            return Position.ALARM_GEOFENCE_EXIT;
+        default:
+            return null;
+        }
     }
 
     @Override

@@ -18,8 +18,12 @@ Ext.define('Traccar.view.NotificationsController', {
     extend: 'Ext.app.ViewController',
     alias: 'controller.notificationsController',
 
+    requires: [
+        'Traccar.store.Notifications'
+    ],
+
     init: function () {
-        this.userId = this.getView().user.getData().id;
+        this.userId = this.getView().user.getId();
         this.getView().getStore().load({
             scope: this,
             callback: function (records, operation, success) {
@@ -33,8 +37,8 @@ Ext.define('Traccar.view.NotificationsController', {
                         var i, index, attributes, storeRecord;
                         if (success) {
                             for (i = 0; i < records.length; i++) {
-                                index = this.getView().getStore().find('type', records[i].getData().type);
-                                attributes = records[i].getData().attributes;
+                                index = this.getView().getStore().findExact('type', records[i].get('type'));
+                                attributes = records[i].get('attributes');
                                 storeRecord = this.getView().getStore().getAt(index);
                                 storeRecord.set('attributes', attributes);
                                 storeRecord.commit();
@@ -64,11 +68,11 @@ Ext.define('Traccar.view.NotificationsController', {
         var record = this.getView().getStore().getAt(rowIndex);
         Ext.Ajax.request({
             scope: this,
-            url: '/api/users/notifications',
+            url: 'api/users/notifications',
             jsonData: {
                 userId: this.userId,
-                type: record.getData().type,
-                attributes: record.getData().attributes
+                type: record.get('type'),
+                attributes: record.get('attributes')
             },
             callback: function (options, success, response) {
                 if (!success) {

@@ -18,10 +18,10 @@ Ext.define('Traccar.view.ServerDialog', {
     extend: 'Traccar.view.BaseEditDialog',
 
     requires: [
-        'Traccar.view.BaseEditDialogController'
+        'Traccar.view.MapPickerDialogController'
     ],
 
-    controller: 'baseEditDialog',
+    controller: 'mapPickerDialog',
     title: Strings.serverTitle,
 
     items: {
@@ -54,7 +54,7 @@ Ext.define('Traccar.view.ServerDialog', {
         }, {
             xtype: 'combobox',
             name: 'distanceUnit',
-            fieldLabel: Strings.settingsDistanceUnit,
+            fieldLabel: Strings.sharedDistance,
             store: 'DistanceUnits',
             displayField: 'name',
             valueField: 'key'
@@ -67,16 +67,19 @@ Ext.define('Traccar.view.ServerDialog', {
             valueField: 'key'
         }, {
             xtype: 'numberfield',
+            reference: 'latitude',
             name: 'latitude',
             fieldLabel: Strings.positionLatitude,
             decimalPrecision: Traccar.Style.coordinatePrecision
         }, {
             xtype: 'numberfield',
+            reference: 'longitude',
             name: 'longitude',
             fieldLabel: Strings.positionLongitude,
             decimalPrecision: Traccar.Style.coordinatePrecision
         }, {
             xtype: 'numberfield',
+            reference: 'zoom',
             name: 'zoom',
             fieldLabel: Strings.serverZoom
         }, {
@@ -85,5 +88,24 @@ Ext.define('Traccar.view.ServerDialog', {
             fieldLabel: Strings.settingsTwelveHourFormat,
             allowBlank: false
         }]
-    }
+    },
+
+    buttons: [{
+        text: Strings.sharedAttributes,
+        handler: 'showAttributesView'
+    }, {
+        glyph: 'xf041@FontAwesome',
+        minWidth: 0,
+        handler: 'getMapState',
+        tooltip: Strings.sharedGetMapState,
+        tooltipType: 'title'
+    }, {
+        xtype: 'tbfill'
+    }, {
+        text: Strings.sharedSave,
+        handler: 'onSaveClick'
+    }, {
+        text: Strings.sharedCancel,
+        handler: 'closeView'
+    }]
 });

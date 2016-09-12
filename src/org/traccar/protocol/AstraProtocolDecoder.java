@@ -68,6 +68,7 @@ public class AstraProtocolDecoder extends BaseProtocolDecoder {
 
             buf.readUnsignedByte(); // index
 
+            position.setValid(true);
             position.setLatitude(buf.readInt() * 0.000001);
             position.setLongitude(buf.readInt() * 0.000001);
 
@@ -103,7 +104,7 @@ public class AstraProtocolDecoder extends BaseProtocolDecoder {
             if (BitUtil.check(reason, 6) || BitUtil.check(reason, 7)) {
 
                 position.set(Position.KEY_RFID, buf.readBytes(7).toString(StandardCharsets.US_ASCII));
-                position.set(Position.KEY_ODOMETER, buf.readUnsignedMedium());
+                position.set(Position.KEY_ODOMETER, buf.readUnsignedMedium() * 1000);
 
                 buf.readUnsignedShort(); // engine time
 

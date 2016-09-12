@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,57 +19,39 @@ Ext.define('Traccar.view.Report', {
     xtype: 'reportView',
 
     requires: [
-        'Traccar.view.ReportController',
-        'Traccar.view.CustomTimeField'
+        'Traccar.view.ReportController'
     ],
 
     controller: 'report',
-    store: 'Positions',
 
     title: Strings.reportTitle,
 
     tbar: [{
         xtype: 'tbtext',
-        html: Strings.reportDevice
+        html: Strings.sharedType
     }, {
         xtype: 'combobox',
-        reference: 'deviceField',
-        store: 'Devices',
-        valueField: 'id',
+        reference: 'reportTypeField',
+        store: 'ReportTypes',
         displayField: 'name',
+        valueField: 'key',
         typeAhead: true,
-        queryMode: 'local'
+        listeners: {
+            change: 'onTypeChange'
+        }
     }, '-', {
-        xtype: 'tbtext',
-        html: Strings.reportFrom
-    }, {
-        xtype: 'datefield',
-        reference: 'fromDateField',
-        startDay: Traccar.Style.weekStartDay,
-        format: Traccar.Style.dateFormat,
-        value: new Date(new Date().getTime() - 30 * 60 * 1000)
-    }, {
-        xtype: 'customTimeField',
-        reference: 'fromTimeField',
-        maxWidth: Traccar.Style.reportTime,
-        value: new Date(new Date().getTime() - 30 * 60 * 1000)
-    }, '-', {
-        xtype: 'tbtext',
-        html: Strings.reportTo
-    }, {
-        xtype: 'datefield',
-        reference: 'toDateField',
-        startDay: Traccar.Style.weekStartDay,
-        format: Traccar.Style.dateFormat,
-        value: new Date()
-    }, {
-        xtype: 'customTimeField',
-        reference: 'toTimeField',
-        maxWidth: Traccar.Style.reportTime,
-        value: new Date()
+        text: Strings.reportConfigure,
+        handler: 'onConfigureClick'
     }, '-', {
         text: Strings.reportShow,
-        handler: 'onShowClick'
+        reference: 'showButton',
+        disabled: true,
+        handler: 'onReportClick'
+    }, {
+        text: Strings.reportCsv,
+        reference: 'csvButton',
+        disabled: true,
+        handler: 'onReportClick'
     }, {
         text: Strings.reportClear,
         handler: 'onClearClick'
@@ -77,43 +59,5 @@ Ext.define('Traccar.view.Report', {
 
     listeners: {
         selectionchange: 'onSelectionChange'
-    },
-
-    columns: [{
-        text: Strings.positionValid,
-        dataIndex: 'valid',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('valid')
-    }, {
-        text: Strings.positionFixTime,
-        dataIndex: 'fixTime',
-        flex: 1,
-        xtype: 'datecolumn',
-        renderer: Traccar.AttributeFormatter.getFormatter('fixTime')
-    }, {
-        text: Strings.positionLatitude,
-        dataIndex: 'latitude',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('latitude')
-    }, {
-        text: Strings.positionLongitude,
-        dataIndex: 'longitude',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('latitude')
-    }, {
-        text: Strings.positionAltitude,
-        dataIndex: 'altitude',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('altitude')
-    }, {
-        text: Strings.positionSpeed,
-        dataIndex: 'speed',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('speed')
-    }, {
-        text: Strings.positionAddress,
-        dataIndex: 'address',
-        flex: 1,
-        renderer: Traccar.AttributeFormatter.getFormatter('address')
-    }]
+    }
 });

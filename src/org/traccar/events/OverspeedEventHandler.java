@@ -23,7 +23,6 @@ import org.traccar.Context;
 import org.traccar.model.Device;
 import org.traccar.model.Event;
 import org.traccar.model.Position;
-import org.traccar.helper.UnitsConverter;
 
 public class OverspeedEventHandler extends BaseEventHandler {
 
@@ -42,7 +41,7 @@ public class OverspeedEventHandler extends BaseEventHandler {
         if (device == null) {
             return null;
         }
-        if (!Context.getDeviceManager().isLatestPosition(position) || !position.getValid()) {
+        if (!Context.getIdentityManager().isLatestPosition(position) || !position.getValid()) {
             return null;
         }
 
@@ -58,12 +57,11 @@ public class OverspeedEventHandler extends BaseEventHandler {
         }
         double oldSpeed = 0;
         if (notRepeat) {
-            Position lastPosition = Context.getDeviceManager().getLastPosition(position.getDeviceId());
+            Position lastPosition = Context.getIdentityManager().getLastPosition(position.getDeviceId());
             if (lastPosition != null) {
                 oldSpeed = lastPosition.getSpeed();
             }
         }
-        speedLimit = UnitsConverter.knotsFromKph(speedLimit);
         if (speed > speedLimit && oldSpeed <= speedLimit) {
             events.add(new Event(Event.TYPE_DEVICE_OVERSPEED, position.getDeviceId(), position.getId()));
         }

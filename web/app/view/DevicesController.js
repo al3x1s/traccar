@@ -21,15 +21,18 @@ Ext.define('Traccar.view.DevicesController', {
     requires: [
         'Traccar.view.CommandDialog',
         'Traccar.view.DeviceDialog',
-        'Traccar.view.DeviceGeofences'
+        'Traccar.view.DeviceGeofences',
+        'Traccar.view.BaseWindow',
+        'Traccar.model.Device',
+        'Traccar.model.Command'
     ],
 
     config: {
         listen: {
             controller: {
                 '*': {
-                    selectDevice: 'selectDevice',
-                    selectReport: 'selectReport'
+                    selectdevice: 'selectDevice',
+                    selectreport: 'selectReport'
                 }
             },
             store: {
@@ -45,6 +48,7 @@ Ext.define('Traccar.view.DevicesController', {
         this.lookupReference('toolbarAddButton').setVisible(!readonly);
         this.lookupReference('toolbarEditButton').setVisible(!readonly);
         this.lookupReference('toolbarRemoveButton').setVisible(!readonly);
+        this.lookupReference('toolbarGeofencesButton').setVisible(!readonly);
     },
 
     onAddClick: function () {
@@ -86,9 +90,7 @@ Ext.define('Traccar.view.DevicesController', {
     },
 
     onGeofencesClick: function () {
-        var admin, device;
-        admin = Traccar.app.getUser().get('admin');
-        device = this.getView().getSelectionModel().getSelection()[0];
+        var device = this.getView().getSelectionModel().getSelection()[0];
         Ext.create('Traccar.view.BaseWindow', {
             title: Strings.sharedGeofences,
             items: {
@@ -96,8 +98,8 @@ Ext.define('Traccar.view.DevicesController', {
                 baseObjectName: 'deviceId',
                 linkObjectName: 'geofenceId',
                 storeName: 'Geofences',
-                urlApi: '/api/devices/geofences',
-                baseObject: device.getData().id
+                urlApi: 'api/devices/geofences',
+                baseObject: device.getId()
             }
         }).show();
     },
@@ -119,7 +121,7 @@ Ext.define('Traccar.view.DevicesController', {
         var device;
         if (pressed) {
             device = this.getView().getSelectionModel().getSelection()[0];
-            this.fireEvent('selectDevice', device, true);
+            this.fireEvent('selectdevice', device, true);
         }
     },
 
@@ -134,7 +136,7 @@ Ext.define('Traccar.view.DevicesController', {
     onSelectionChange: function (selected) {
         this.updateButtons(selected);
         if (selected.getCount() > 0) {
-            this.fireEvent('selectDevice', selected.getLastSelected(), true);
+            this.fireEvent('selectdevice', selected.getLastSelected(), true);
         }
     },
 

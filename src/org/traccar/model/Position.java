@@ -19,7 +19,6 @@ import java.util.Date;
 
 public class Position extends Message {
 
-    // Words separated by dashes (word-second-third)
     public static final String KEY_ORIGINAL = "raw";
     public static final String KEY_INDEX = "index";
     public static final String KEY_HDOP = "hdop";
@@ -29,7 +28,8 @@ public class Position extends Message {
     public static final String KEY_EVENT = "event";
     public static final String KEY_ALARM = "alarm";
     public static final String KEY_STATUS = "status";
-    public static final String KEY_ODOMETER = "odometer";
+    public static final String KEY_ODOMETER = "odometer"; // meters
+    public static final String KEY_TRIP_ODOMETER = "tripOdometer";
     public static final String KEY_HOURS = "hours";
     public static final String KEY_INPUT = "input";
     public static final String KEY_OUTPUT = "output";
@@ -40,6 +40,7 @@ public class Position extends Message {
     public static final String KEY_LAC = "lac";
     public static final String KEY_CID = "cid";
     public static final String KEY_FUEL = "fuel";
+    public static final String KEY_FUEL_CONSUMPTION = "fuelConsumption";
     public static final String KEY_RFID = "rfid";
     public static final String KEY_VERSION = "version";
     public static final String KEY_TYPE = "type";
@@ -48,7 +49,8 @@ public class Position extends Message {
     public static final String KEY_CHARGE = "charge";
     public static final String KEY_IP = "ip";
     public static final String KEY_ARCHIVE = "archive";
-    public static final String KEY_DISTANCE = "distance";
+    public static final String KEY_DISTANCE = "distance"; // meters
+    public static final String KEY_TOTAL_DISTANCE = "totalDistance";
     public static final String KEY_RPM = "rpm";
     public static final String KEY_VIN = "vin";
     public static final String KEY_APPROXIMATE = "approximate";
@@ -56,8 +58,8 @@ public class Position extends Message {
     public static final String KEY_MOTION = "motion";
     public static final String KEY_ARMED = "armed";
 
-    public static final String KEY_OBD_SPEED = "obd-speed";
-    public static final String KEY_OBD_ODOMETER = "obd-odometer";
+    public static final String KEY_OBD_SPEED = "obdSpeed";
+    public static final String KEY_OBD_ODOMETER = "obdOdometer";
 
     public static final String KEY_RESULT = "result";
 
@@ -76,7 +78,6 @@ public class Position extends Message {
     public static final String ALARM_OVERSPEED = "overspeed";
     public static final String ALARM_FALL_DOWN = "fallDown";
     public static final String ALARM_LOW_BATTERY = "lowBattery";
-    public static final String ALARM_MOTION = "motion";
     public static final String ALARM_FAULT = "fault";
     public static final String ALARM_POWER_OFF = "powerOff";
     public static final String ALARM_GEOFENCE = "geofence";
@@ -84,7 +85,10 @@ public class Position extends Message {
     public static final String ALARM_GEOFENCE_EXIT = "geofenceExit";
     public static final String ALARM_GPS_ANTENNA_CUT = "gpsAntennaCut";
     public static final String ALARM_ACCIDENT = "accident";
-
+    public static final String ALARM_TOW = "tow";
+    public static final String ALARM_ACCELETATION = "hardAcceleration";
+    public static final String ALARM_BREAKING = "hardBreaking";
+    public static final String ALARM_FATIGUE_DRIVING = "fatigueDriving";
 
     private String protocol;
 
