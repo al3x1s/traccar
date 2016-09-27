@@ -16,6 +16,8 @@
 package org.traccar;
 
 import com.ning.http.client.AsyncHttpClient;
+
+import org.traccar.database.AliasesManager;
 import org.traccar.database.ConnectionManager;
 import org.traccar.database.DataManager;
 import org.traccar.database.DeviceManager;
@@ -23,6 +25,7 @@ import org.traccar.database.IdentityManager;
 import org.traccar.database.NotificationManager;
 import org.traccar.database.PermissionsManager;
 import org.traccar.database.GeofenceManager;
+import org.traccar.database.StatisticsManager;
 import org.traccar.geocode.BingMapsReverseGeocoder;
 import org.traccar.geocode.FactualReverseGeocoder;
 import org.traccar.geocode.GeocodeFarmReverseGeocoder;
@@ -134,12 +137,26 @@ public final class Context {
         return eventForwarder;
     }
 
+    private static AliasesManager aliasesManager;
+
+    public static AliasesManager getAliasesManager() {
+        return aliasesManager;
+    }
+
+    private static StatisticsManager statisticsManager;
+
+    public static StatisticsManager getStatisticsManager() {
+        return statisticsManager;
+    }
+
     public static void init(String[] arguments) throws Exception {
 
         config = new Config();
-        if (arguments.length > 0) {
-            config.load(arguments[0]);
+        if (arguments.length <= 0) {
+            throw new RuntimeException("Configuration file is not provided");
         }
+
+        config.load(arguments[0]);
 
         loggerEnabled = config.getBoolean("logger.enable");
         if (loggerEnabled) {
@@ -232,6 +249,10 @@ public final class Context {
         if (config.getBoolean("event.forward.enable")) {
             eventForwarder = new EventForwarder();
         }
+
+        aliasesManager = new AliasesManager(dataManager);
+
+        statisticsManager = new StatisticsManager();
 
     }
 

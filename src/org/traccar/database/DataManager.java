@@ -37,6 +37,7 @@ import liquibase.resource.ResourceAccessor;
 
 import org.traccar.Config;
 import org.traccar.helper.Log;
+import org.traccar.model.AttributeAlias;
 import org.traccar.model.Device;
 import org.traccar.model.DevicePermission;
 import org.traccar.model.Event;
@@ -47,6 +48,7 @@ import org.traccar.model.GroupPermission;
 import org.traccar.model.Notification;
 import org.traccar.model.Position;
 import org.traccar.model.Server;
+import org.traccar.model.Statistics;
 import org.traccar.model.User;
 import org.traccar.model.DeviceGeofence;
 import org.traccar.model.GeofencePermission;
@@ -459,6 +461,40 @@ public class DataManager {
         QueryBuilder.create(dataSource, getQuery("database.deleteNotification"))
                 .setLong("id", notification.getId())
                 .executeUpdate();
+    }
+
+    public Collection<AttributeAlias> getAttributeAliases() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectAttributeAliases"))
+                .executeQuery(AttributeAlias.class);
+    }
+
+    public void addAttributeAlias(AttributeAlias attributeAlias) throws SQLException {
+        attributeAlias.setId(QueryBuilder.create(dataSource, getQuery("database.insertAttributeAlias"), true)
+                .setObject(attributeAlias)
+                .executeUpdate());
+    }
+
+    public void updateAttributeAlias(AttributeAlias attributeAlias) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.updateAttributeAlias"))
+                .setObject(attributeAlias)
+                .executeUpdate();
+    }
+
+    public void removeAttributeAlias(long attributeAliasId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.deleteAttributeAlias"))
+                .setLong("id", attributeAliasId)
+                .executeUpdate();
+    }
+
+    public Collection<Statistics> getStatistics() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectStatistics"))
+                .executeQuery(Statistics.class);
+    }
+
+    public void addStatistics(Statistics statistics) throws SQLException {
+        statistics.setId(QueryBuilder.create(dataSource, getQuery("database.insertStatistics"), true)
+                .setObject(statistics)
+                .executeUpdate());
     }
 
     public void saveImage(Long deviceId, String rawImage) throws SQLException {
