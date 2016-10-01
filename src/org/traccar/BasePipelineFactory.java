@@ -57,6 +57,7 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
     private GeofenceEventHandler geofenceEventHandler;
     private AlertEventHandler alertEventHandler;
     private IgnitionEventHandler ignitionEventHandler;
+    private VehicleAlertHandler vehicleAlertHanlder;
 
     private static final class OpenChannelHandler extends SimpleChannelHandler {
 
@@ -159,6 +160,9 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
         if (Context.getConfig().getBoolean("event.ignitionHandler")) {
             ignitionEventHandler = new IgnitionEventHandler();
         }
+        if (Context.getConfig().getBoolean("event.vehicleAlertHandler")) {
+            vehicleAlertHanlder = new VehicleAlertHandler();
+        }
     }
 
     protected abstract void addSpecificHandlers(ChannelPipeline pipeline);
@@ -188,6 +192,10 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
         pipeline.addLast("remoteAddress", new RemoteAddressHandler());
 
         addDynamicHandlers(pipeline);
+
+        if (vehicleAlertHanlder != null) {
+            pipeline.addLast("VehicleAlertHandler", vehicleAlertHanlder);
+        }
 
         if (filterHandler != null) {
             pipeline.addLast("filter", filterHandler);
@@ -232,6 +240,10 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
         if (ignitionEventHandler != null) {
             pipeline.addLast("IgnitionEventHandler", ignitionEventHandler);
         }
+
+//        if (vehicleAlertHanlder != null) {
+//            pipeline.addLast("VehicleAlertHandler", vehicleAlertHanlder);
+//        }
 
         pipeline.addLast("mainHandler", new MainEventHandler());
         return pipeline;

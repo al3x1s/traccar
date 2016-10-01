@@ -15,6 +15,8 @@
  */
 package org.traccar.notification;
 
+import java.io.UnsupportedEncodingException;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -27,6 +29,7 @@ import javax.mail.internet.MimeMessage;
 import org.traccar.Config;
 import org.traccar.Context;
 import org.traccar.helper.Log;
+import org.traccar.model.AlertLog;
 import org.traccar.model.Event;
 import org.traccar.model.Extensible;
 import org.traccar.model.Position;
@@ -147,6 +150,56 @@ public final class NotificationMail {
         Runnable runnableSend = new Runnable() {
             public void run() {
                 sendMailSync(userId, event, position);
+            }
+        };
+
+        new Thread(runnableSend).start();
+    }
+
+
+    public static void sendMailSync(long userId, AlertLog alertLog, Position position) {
+
+        Properties mailServerProperties;
+        Session mailSession;
+        MimeMessage mailMessage;
+
+        try {
+            User user = Context.getPermissionsManager().getUser(userId);
+
+            mailServerProperties = getConfigProperies();
+            if (!mailServerProperties.containsKey("mail.smtp.host")) {
+                mailServerProperties = getAttributesProperties(user);
+                if (!mailServerProperties.containsKey("mail.smtp.host")) {
+                    return;
+                }
+            }
+            mailSession = Session.getInstance(mailServerProperties, null);
+
+            mailMessage = new MimeMessage(mailSession);
+
+            if (mailServerProperties.getProperty("mail.smtp.from") != null) {
+                mailMessage.setFrom(new InternetAddress(mailServerProperties.getProperty("mail.smtp.from"), "GPS"));
+            }
+
+            mailMessage.addRecipient(Message.RecipientType.TO, new InternetAddress(user.getEmail()));
+            mailMessage.setSubject(NotificationFormatter.formatTitle(userId, alertLog, position));
+            mailMessage.setContent(NotificationFormatter.formatMessage(userId, alertLog, position), "text/html");
+            Transport transport = mailSession.getTransport("smtp");
+            transport.connect(mailServerProperties.getProperty("mail.smtp.host"),
+                    mailServerProperties.getProperty("mail.smtp.username"),
+                    mailServerProperties.getProperty("mail.smtp.password"));
+            transport.sendMessage(mailMessage, mailMessage.getAllRecipients());
+            transport.close();
+
+        } catch (MessagingException | SQLException | UnsupportedEncodingException error) {
+            Log.warning(error);
+        }
+    }
+
+    public static void sendMailAsync(final long userId, final AlertLog alertLog, final Position position) {
+        Runnable runnableSend = new Runnable() {
+            public void run() {
+                sendMailSync(userId, alertLog, position);
             }
         };
 

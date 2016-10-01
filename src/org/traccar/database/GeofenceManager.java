@@ -178,9 +178,9 @@ public class GeofenceManager {
 
                     for (DeviceGeofence deviceGeofence : databaseDeviceGeofences) {
                         getDeviceGeofences(deviceGeofences, deviceGeofence.getDeviceId())
-                            .add(deviceGeofence.getGeofenceId());
+                                .add(deviceGeofence.getGeofenceId());
                         getDeviceGeofences(deviceGeofencesWithGroups, deviceGeofence.getDeviceId())
-                            .add(deviceGeofence.getGeofenceId());
+                                .add(deviceGeofence.getGeofenceId());
                     }
 
                     for (Device device : allDevices) {
@@ -292,4 +292,11 @@ public class GeofenceManager {
         return result;
     }
 
+    public boolean isDeviceInGeofence(long geofenceId, Position position) {
+        if (getGeofence(geofenceId) != null) {
+            return getGeofence(geofenceId).getGeometry().containsPoint(position.getLatitude(), position.getLongitude());
+        } else {
+            return false;
+        }
+    }
 }

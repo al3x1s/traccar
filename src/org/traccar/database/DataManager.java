@@ -55,6 +55,8 @@ import org.traccar.model.GeofencePermission;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.traccar.model.Vehicle;
+import org.traccar.model.VehicleAlert;
 
 public class DataManager {
 
@@ -178,8 +180,8 @@ public class DataManager {
                 .executeUpdate();
         if (user.getHashedPassword() != null) {
             QueryBuilder.create(dataSource, getQuery("database.updateUserPassword"))
-                .setObject(user)
-                .executeUpdate();
+                    .setObject(user)
+                    .executeUpdate();
         }
     }
 
@@ -504,4 +506,20 @@ public class DataManager {
                 .executeUpdate();
     }
 
+    public Collection<VehicleAlert> getAllVehicleAlert() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectVehicleAlertAll"))
+                .executeQuery(VehicleAlert.class);
+    }
+
+    public Vehicle getVehicle(long deviceId) throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.getVehicleByDeviceId"))
+                .setLong("id", deviceId)
+                .executeQuerySingle(Vehicle.class);
+    }
+
+    public Collection<User> getUserAlert(long alertId) throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.getUserByAlertId"))
+                .setLong("id", alertId)
+                .executeQuery(User.class);
+    }
 }

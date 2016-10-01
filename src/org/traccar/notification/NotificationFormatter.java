@@ -15,15 +15,21 @@
  */
 package org.traccar.notification;
 
+import java.sql.SQLException;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Formatter;
 import java.util.Locale;
 
 import org.traccar.Context;
+import org.traccar.helper.Log;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.AlertLog;
 import org.traccar.model.Device;
 import org.traccar.model.Event;
 import org.traccar.model.Position;
+import org.traccar.model.Vehicle;
+import org.traccar.model.VehicleAlert;
 
 public final class NotificationFormatter {
 
@@ -195,6 +201,93 @@ public final class NotificationFormatter {
         String result = formatter.toString();
         formatter.close();
         return result;
+    }
+
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_GEOFENCE_ENTER = "%1$s: ha entrado a la geocerca";
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_GEOFENCE_EXIT = "%1$s: ha salido a la geocerca";
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_ODOMETER = "%1$s: alerta de odometro";
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_SPEED = "%1$s: exceso de velocidad";
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_STOP = "%1$s: detenido";
+    public static final String TITLE_TEMPLATE_ALERTLOG_TYPE_PANIC = "%1$s: Acciono el boton de panico";
+
+    public static String formatTitle(long userId, AlertLog alertLog, Position position) throws SQLException {
+        Vehicle vehicle = Context.getDataManager().getVehicle(position.getDeviceId());
+        StringBuilder stringBuilder = new StringBuilder();
+        Formatter formatter = new Formatter(stringBuilder, Locale.getDefault());
+
+        switch (alertLog.getTypeId()) {
+            case VehicleAlert.TYPE_STOP:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_STOP, vehicle.getName());
+                break;
+            case VehicleAlert.TYPE_SPEED:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_SPEED, vehicle.getName());
+                break;
+            case VehicleAlert.TYPE_ODOMETER:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_ODOMETER, vehicle.getName());
+                break;
+            case VehicleAlert.TYPE_GEOFENCE_ENTER:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_GEOFENCE_ENTER, vehicle.getName());
+                break;
+            case VehicleAlert.TYPE_GEOFENCE_EXIT:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_GEOFENCE_EXIT, vehicle.getName());
+                break;
+            case VehicleAlert.TYPE_PANIC:
+                formatter.format(TITLE_TEMPLATE_ALERTLOG_TYPE_PANIC, vehicle.getName());
+                break;
+            default:
+                formatter.format("Unknown type");
+                break;
+        }
+        String result = formatter.toString();
+        formatter.close();
+        return result;
+    }
+
+    public static String formatMessage(long userId, AlertLog alertLog, Position p) {
+        StringBuilder c = new StringBuilder();
+        try {
+            Vehicle vehicle = Context.getDataManager().getVehicle(p.getDeviceId());
+            String dateString = new SimpleDateFormat("dd/MM/yyyy hh:mm aa").format(p.getFixTime());
+
+            c.append("<table>");
+            c.append("<tr><td> <b>Cliente:</b> </td><td>").append(vehicle.getCompany()).append("</td></tr>");
+            c.append("<tr><td> <b>Vehiculo:</b> </td><td>").append(vehicle.getName()).append("</td></tr>");
+            c.append("<tr><td> <b>Placa:</b> </td><td>").append(vehicle.getPlaca()).append("</td></tr>");
+            c.append("<tr><td> <b>Fecha:</b> </td><td>").append(dateString).append("</td></tr>");
+            c.append("<tr><td> <b>Velocidad:</b> </td><td>").append(formatSpeed(userId, p.getSpeed()))
+                    .append("</td></tr>");
+            c.append("<tr><td> <b>Mensaje:</b> </td><td><font color=\"red\">");
+
+            switch (alertLog.getTypeId()) {
+                case VehicleAlert.TYPE_STOP:
+                    c.append("Vehiculo se ha detenido");
+                    break;
+                case VehicleAlert.TYPE_SPEED:
+                    c.append("Vehiculo ha excedido el limite de velocidad");
+                    break;
+                case VehicleAlert.TYPE_ODOMETER:
+                    c.append(String.format("Vehiculo ha recorrido %s Km", alertLog.getOdometer()));
+                    break;
+                case VehicleAlert.TYPE_GEOFENCE_ENTER:
+                    c.append("Ha entrado a la geocerca:")
+                            .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
+                    break;
+                case VehicleAlert.TYPE_GEOFENCE_EXIT:
+                    c.append("Ha salido de la geocerca:")
+                            .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
+                    break;
+                case VehicleAlert.TYPE_PANIC:
+                    c.append("Vehiculo acciono el boton de panico");
+                    break;
+                default:
+                    c.append("Unknown type");
+                    break;
+            }
+            c.append("</font></td></tr></table>");
+        } catch (Exception e) {
+            Log.warning(e);
+        }
+        return c.toString();
     }
 
     private static String formatSpeed(long userId, double speed) {

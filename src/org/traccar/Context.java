@@ -26,6 +26,7 @@ import org.traccar.database.NotificationManager;
 import org.traccar.database.PermissionsManager;
 import org.traccar.database.GeofenceManager;
 import org.traccar.database.StatisticsManager;
+import org.traccar.database.VehicleAlertManager;
 import org.traccar.geocode.BingMapsReverseGeocoder;
 import org.traccar.geocode.FactualReverseGeocoder;
 import org.traccar.geocode.GeocodeFarmReverseGeocoder;
@@ -123,6 +124,12 @@ public final class Context {
 
     public static NotificationManager getNotificationManager() {
         return notificationManager;
+    }
+
+    private static VehicleAlertManager vehicleAlertManager;
+
+    public static VehicleAlertManager getVehicleAlertManager() {
+        return vehicleAlertManager;
     }
 
     private static final AsyncHttpClient ASYNC_HTTP_CLIENT = new AsyncHttpClient();
@@ -253,6 +260,8 @@ public final class Context {
         aliasesManager = new AliasesManager(dataManager);
 
         statisticsManager = new StatisticsManager();
+
+        vehicleAlertManager = new VehicleAlertManager(dataManager);
 
     }
 
