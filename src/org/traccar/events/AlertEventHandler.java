@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.traccar.events;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.traccar.BaseEventHandler;
 import org.traccar.model.Event;
@@ -28,9 +28,9 @@ public class AlertEventHandler extends BaseEventHandler {
     protected Collection<Event> analyzePosition(Position position) {
         Object alarm = position.getAttributes().get(Position.KEY_ALARM);
         if (alarm != null) {
-            Collection<Event> events = new ArrayList<>();
-            events.add(new Event(Event.TYPE_ALARM, position.getDeviceId(), position.getId()));
-            return events;
+            Event event = new Event(Event.TYPE_ALARM, position.getDeviceId(), position.getId());
+            event.set(Position.KEY_ALARM, (String) alarm);
+            return Collections.singleton(event);
         }
         return null;
     }

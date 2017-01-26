@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2016 Anton Tananaev (anton@traccar.org)
  * Copyright 2012 Luis Parada (luis.parada@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -28,6 +28,10 @@ import java.net.SocketAddress;
 import java.util.regex.Pattern;
 
 public class Pt502ProtocolDecoder extends BaseProtocolDecoder {
+
+    private static final int MAX_CHUNK_SIZE = 960;
+
+    private byte[] photo;
 
     public Pt502ProtocolDecoder(Pt502Protocol protocol) {
         super(protocol);
@@ -92,7 +96,8 @@ public class Pt502ProtocolDecoder extends BaseProtocolDecoder {
         String type = parser.next();
 
         if (type.startsWith("PHO") && channel != null) {
-            channel.write("#PHD0," + type.substring(3) + "\r\n");
+            photo = new byte[Integer.parseInt(type.substring(3))];
+            channel.write("#PHD0," + Math.min(photo.length, MAX_CHUNK_SIZE) + "\r\n");
         }
 
         position.set(Position.KEY_ALARM, decodeAlarm(type));
@@ -131,7 +136,7 @@ public class Pt502ProtocolDecoder extends BaseProtocolDecoder {
         if (parser.hasNext()) {
             int value = parser.nextInt(16);
             position.set(Position.KEY_BATTERY, value >> 8);
-            position.set(Position.KEY_GSM, (value >> 4) & 0xf);
+            position.set(Position.KEY_RSSI, (value >> 4) & 0xf);
             position.set(Position.KEY_SATELLITES, value & 0xf);
         }
 

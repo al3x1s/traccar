@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2013 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,9 @@ public class OsmAndProtocolDecoder extends BaseProtocolDecoder {
                 case "altitude":
                     position.setAltitude(Double.parseDouble(value));
                     break;
+                case "accuracy":
+                    position.setAccuracy(Double.parseDouble(value));
+                    break;
                 case "hdop":
                     position.set(Position.KEY_HDOP, Double.parseDouble(value));
                     break;
@@ -135,8 +138,7 @@ public class OsmAndProtocolDecoder extends BaseProtocolDecoder {
             position.setTime(new Date());
         }
 
-        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress);
-        if (deviceSession != null) {
+        if (position.getDeviceId() != 0) {
             sendResponse(channel, HttpResponseStatus.OK);
             return position;
         } else {

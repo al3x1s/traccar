@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class Command extends Message {
     public static final String TYPE_OUTPUT_CONTROL = "outputControl";
     public static final String TYPE_VOICE_MONITORING = "voiceMonitoring";
     public static final String TYPE_SET_AGPS = "setAgps";
+    public static final String TYPE_SET_INDICATOR = "setIndicator";
 
     public static final String TYPE_MODE_POWER_SAVING = "modePowerSaving";
     public static final String TYPE_MODE_DEEP_SLEEP = "modeDeepSleep";
@@ -52,6 +53,7 @@ public class Command extends Message {
     public static final String TYPE_ALARM_CLOCK = "alarmClock";
     public static final String TYPE_ALARM_SPEED = "alarmSpeed";
     public static final String TYPE_ALARM_FALL = "alarmFall";
+    public static final String TYPE_ALARM_VIBRATION = "alarmVibration";
 
     public static final String KEY_UNIQUE_ID = "uniqueId";
     public static final String KEY_FREQUENCY = "frequency";

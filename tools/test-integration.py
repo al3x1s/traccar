@@ -71,7 +71,7 @@ debug = '-v' in sys.argv
 def load_ports():
     ports = {}
     dir = os.path.dirname(os.path.abspath(__file__))
-    root = xml.etree.ElementTree.parse(dir + '/../debug.xml').getroot()
+    root = xml.etree.ElementTree.parse(dir + '/../setup/default.xml').getroot()
     for entry in root.findall('entry'):
         key = entry.attrib['key']
         if key.endswith('.port'):
@@ -89,20 +89,20 @@ def login():
 
 def remove_devices(cookie):
     request = urllib2.Request(baseUrl + '/api/devices')
-    request.add_header('cookie', cookie)
+    request.add_header('Cookie', cookie)
     response = urllib2.urlopen(request)
     data = json.load(response)
     if debug:
         print '\ndevices: %s\n' % repr(data)
     for device in data:
         request = urllib2.Request(baseUrl + '/api/devices/' + str(device['id']))
-        request.add_header('cookie', cookie)
+        request.add_header('Cookie', cookie)
         request.get_method = lambda: 'DELETE'
         response = urllib2.urlopen(request)
 
 def add_device(cookie, unique_id):
     request = urllib2.Request(baseUrl + '/api/devices')
-    request.add_header('cookie', cookie)
+    request.add_header('Cookie', cookie)
     request.add_header('Content-Type', 'application/json')
     device = { 'name' : unique_id, 'uniqueId' : unique_id }
     response = urllib2.urlopen(request, json.dumps(device))
@@ -118,8 +118,9 @@ def send_message(port, message):
 def get_protocols(cookie, device_id):
     params = { 'deviceId' : device_id, 'from' : '2000-01-01T00:00:00.000Z', 'to' : '2050-01-01T00:00:00.000Z' }
     request = urllib2.Request(baseUrl + '/api/positions?' + urllib.urlencode(params))
-    request.add_header('cookie', cookie)
+    request.add_header('Cookie', cookie)
     request.add_header('Content-Type', 'application/json')
+    request.add_header('Accept', 'application/json')
     response = urllib2.urlopen(request)
     protocols = []
     for position in json.load(response):

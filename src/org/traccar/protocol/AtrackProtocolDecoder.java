@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 - 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2013 - 2015 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,13 +93,13 @@ public class AtrackProtocolDecoder extends BaseProtocolDecoder {
                     position.set(Position.KEY_BATTERY, buf.readUnsignedShort());
                     break;
                 case "GQ":
-                    position.set(Position.KEY_GSM, buf.readUnsignedByte());
+                    buf.readUnsignedByte(); // rssi
                     break;
                 case "CE":
-                    position.set(Position.KEY_CID, buf.readUnsignedInt());
+                    buf.readUnsignedInt(); // cid
                     break;
                 case "LC":
-                    position.set(Position.KEY_LAC, buf.readUnsignedShort());
+                    buf.readUnsignedShort(); // lac
                     break;
                 case "CN":
                     buf.readUnsignedInt(); // mcc + mnc

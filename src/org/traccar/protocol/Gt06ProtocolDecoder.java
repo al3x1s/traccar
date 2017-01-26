@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.traccar.helper.BitUtil;
 import org.traccar.helper.Checksum;
 import org.traccar.helper.DateBuilder;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -142,10 +144,8 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
             lbsLength = buf.readUnsignedByte();
         }
 
-        position.set(Position.KEY_MCC, buf.readUnsignedShort());
-        position.set(Position.KEY_MNC, buf.readUnsignedByte());
-        position.set(Position.KEY_LAC, buf.readUnsignedShort());
-        position.set(Position.KEY_CID, buf.readUnsignedMedium());
+        position.setNetwork(new Network(CellTower.from(
+                buf.readUnsignedShort(), buf.readUnsignedByte(), buf.readUnsignedShort(), buf.readUnsignedMedium())));
 
         if (lbsLength > 0) {
             buf.skipBytes(lbsLength - 9);
@@ -159,7 +159,7 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_IGNITION, BitUtil.check(flags, 1));
         position.set(Position.KEY_STATUS, flags);
         position.set(Position.KEY_BATTERY, buf.readUnsignedByte());
-        position.set(Position.KEY_GSM, buf.readUnsignedByte());
+        position.set(Position.KEY_RSSI, buf.readUnsignedByte());
         position.set(Position.KEY_ALARM, decodeAlarm(buf.readUnsignedByte()));
     }
 
@@ -222,8 +222,7 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
                     }
                 }
 
-                DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, imei);
-                if (deviceSession != null) {
+                if (getDeviceSession(channel, remoteAddress, imei) != null) {
                     buf.skipBytes(buf.readableBytes() - 6);
                     sendResponse(channel, type, buf.readUnsignedShort());
                 }
@@ -235,11 +234,29 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
                     return null;
                 }
 
-                if (type == MSG_STRING) {
+                Position position = new Position();
+                position.setDeviceId(deviceSession.getDeviceId());
+                position.setProtocol(getProtocolName());
 
-                    Position position = new Position();
-                    position.setDeviceId(deviceSession.getDeviceId());
-                    position.setProtocol(getProtocolName());
+                if (type == MSG_LBS_EXTEND) {
+
+                    DateBuilder dateBuilder = new DateBuilder(timeZone)
+                            .setDate(buf.readUnsignedByte(), buf.readUnsignedByte(), buf.readUnsignedByte())
+                            .setTime(buf.readUnsignedByte(), buf.readUnsignedByte(), buf.readUnsignedByte());
+
+                    getLastLocation(position, dateBuilder.getDate());
+
+                    int mcc = buf.readUnsignedShort();
+                    int mnc = buf.readUnsignedByte();
+
+                    Network network = new Network();
+                    for (int i = 0; i < 7; i++) {
+                        network.addCellTower(CellTower.from(
+                                mcc, mnc, buf.readUnsignedShort(), buf.readUnsignedMedium(), -buf.readUnsignedByte()));
+                    }
+                    position.setNetwork(network);
+
+                } else if (type == MSG_STRING) {
 
                     getLastLocation(position, null);
 
@@ -250,17 +267,7 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
                         position.set("command", buf.readBytes(commandLength - 1).toString(StandardCharsets.US_ASCII));
                     }
 
-                    buf.readUnsignedShort(); // language
-
-                    sendResponse(channel, type, buf.readUnsignedShort());
-
-                    return position;
-
                 } else if (isSupported(type)) {
-
-                    Position position = new Position();
-                    position.setDeviceId(deviceSession.getDeviceId());
-                    position.setProtocol(getProtocolName());
 
                     if (hasGps(type)) {
                         decodeGps(position, buf);
@@ -280,23 +287,22 @@ public class Gt06ProtocolDecoder extends BaseProtocolDecoder {
                         position.set(Position.KEY_ODOMETER, buf.readUnsignedInt());
                     }
 
-                    if (buf.readableBytes() > 6) {
-                        buf.skipBytes(buf.readableBytes() - 6);
-                    }
-                    int index = buf.readUnsignedShort();
-                    position.set(Position.KEY_INDEX, index);
-                    sendResponse(channel, type, index);
-
-                    return position;
-
                 } else {
 
                     buf.skipBytes(dataLength);
                     if (type != MSG_COMMAND_0 && type != MSG_COMMAND_1 && type != MSG_COMMAND_2) {
                         sendResponse(channel, type, buf.readUnsignedShort());
                     }
+                    return null;
 
                 }
+
+                if (buf.readableBytes() > 6) {
+                    buf.skipBytes(buf.readableBytes() - 6);
+                }
+                sendResponse(channel, type, buf.readUnsignedShort());
+
+                return position;
 
             }
 

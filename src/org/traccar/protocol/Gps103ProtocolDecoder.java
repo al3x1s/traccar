@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.traccar.DeviceSession;
 import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -95,10 +97,7 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
             .number("(d+.?d*%),")                // throttle
             .number("(d+),")                     // rpm
             .number("(d+.d+),")                  // battery
-            .number("[^,]*,")                    // dtc 1
-            .number("[^,]*,")                    // dtc 2
-            .number("[^,]*,")                    // dtc 3
-            .number("[^,]*")                     // dtc 4
+            .number("([^;]*)")                   // dtcs
             .any()
             .compile();
 
@@ -116,6 +115,14 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
                 return Position.ALARM_MOVEMENT;
             case "speed":
                 return Position.ALARM_OVERSPEED;
+            case "acc on":
+                return Position.ALARM_POWER_ON;
+            case "acc off":
+                return Position.ALARM_POWER_OFF;
+            case "door alarm":
+                return Position.ALARM_DOOR;
+            case "ac alarm":
+                return Position.ALARM_POWER_CUT;
             default:
                 return null;
         }
@@ -166,8 +173,8 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
 
             getLastLocation(position, null);
 
-            position.set(Position.KEY_LAC, parser.nextInt(16));
-            position.set(Position.KEY_CID, parser.nextInt(16));
+            position.setNetwork(new Network(
+                    CellTower.fromLacCid(parser.nextInt(16), parser.nextInt(16))));
 
             return position;
 
@@ -197,6 +204,7 @@ public class Gps103ProtocolDecoder extends BaseProtocolDecoder {
             position.set(Position.KEY_THROTTLE, parser.next());
             position.set(Position.KEY_RPM, parser.next());
             position.set(Position.KEY_BATTERY, parser.next());
+            position.set(Position.KEY_DTCS, parser.next().replace(',', ' ').trim());
 
             return position;
 

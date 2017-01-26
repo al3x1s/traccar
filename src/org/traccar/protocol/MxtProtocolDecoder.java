@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class MxtProtocolDecoder extends BaseProtocolDecoder {
                 position.set(Position.KEY_SATELLITES, buf.readUnsignedByte());
                 position.set(Position.KEY_HDOP, buf.readUnsignedByte());
                 buf.readUnsignedByte(); // GPS accuracy
-                position.set(Position.KEY_GSM, buf.readUnsignedByte());
+                position.set(Position.KEY_RSSI, buf.readUnsignedByte());
                 buf.readUnsignedShort(); // time since boot
                 buf.readUnsignedByte(); // input voltage
                 position.set(Position.PREFIX_TEMP + 1, buf.readByte());

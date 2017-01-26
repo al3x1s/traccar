@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public abstract class ExtendedObjectDecoder implements ChannelUpstreamHandler {
         MessageEvent e = (MessageEvent) evt;
         Object originalMessage = e.getMessage();
         Object decodedMessage = decode(e.getChannel(), e.getRemoteAddress(), originalMessage);
-        onMessageEvent(e.getChannel(), e.getRemoteAddress(), originalMessage); // call after decode
+        onMessageEvent(e.getChannel(), e.getRemoteAddress(), originalMessage, decodedMessage);
         if (originalMessage == decodedMessage) {
             ctx.sendUpstream(evt);
         } else {
@@ -77,7 +77,8 @@ public abstract class ExtendedObjectDecoder implements ChannelUpstreamHandler {
         }
     }
 
-    protected void onMessageEvent(Channel channel, SocketAddress remoteAddress, Object msg) {
+    protected void onMessageEvent(
+            Channel channel, SocketAddress remoteAddress, Object originalMessage, Object decodedMessage) {
     }
 
     protected Object handleEmptyMessage(Channel channel, SocketAddress remoteAddress, Object msg) {

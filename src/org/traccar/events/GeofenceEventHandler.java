@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,22 @@ public class GeofenceEventHandler extends BaseEventHandler {
 
         Collection<Event> events = new ArrayList<>();
         for (long geofenceId : newGeofences) {
-            Event event = new Event(Event.TYPE_GEOFENCE_ENTER, position.getDeviceId(), position.getId());
-            event.setGeofenceId(geofenceId);
-            events.add(event);
+            long calendarId = geofenceManager.getGeofence(geofenceId).getCalendarId();
+            if (calendarId == 0 || Context.getCalendarManager().getCalendar(calendarId) == null
+                    || Context.getCalendarManager().getCalendar(calendarId).checkMoment(position.getFixTime())) {
+                Event event = new Event(Event.TYPE_GEOFENCE_ENTER, position.getDeviceId(), position.getId());
+                event.setGeofenceId(geofenceId);
+                events.add(event);
+            }
         }
         for (long geofenceId : oldGeofences) {
-            Event event = new Event(Event.TYPE_GEOFENCE_EXIT, position.getDeviceId(), position.getId());
-            event.setGeofenceId(geofenceId);
-            events.add(event);
+            long calendarId = geofenceManager.getGeofence(geofenceId).getCalendarId();
+            if (calendarId == 0 || Context.getCalendarManager().getCalendar(calendarId) == null
+                    || Context.getCalendarManager().getCalendar(calendarId).checkMoment(position.getFixTime())) {
+                Event event = new Event(Event.TYPE_GEOFENCE_EXIT, position.getDeviceId(), position.getId());
+                event.setGeofenceId(geofenceId);
+                events.add(event);
+            }
         }
         return events;
     }

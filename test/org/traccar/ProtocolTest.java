@@ -7,6 +7,7 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpVersion;
 import org.junit.Assert;
 import org.traccar.database.IdentityManager;
+import org.traccar.model.CellTower;
 import org.traccar.model.Command;
 import org.traccar.model.Device;
 import org.traccar.model.Position;
@@ -22,41 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-public class ProtocolTest {
-
-    static {
-        Context.init(new IdentityManager() {
-
-            private Device createDevice() {
-                Device device = new Device();
-                device.setId(1);
-                device.setName("test");
-                device.setUniqueId("123456789012345");
-                return device;
-            }
-
-            @Override
-            public Device getDeviceById(long id) {
-                return createDevice();
-            }
-
-            @Override
-            public Device getDeviceByUniqueId(String uniqueId) {
-                return createDevice();
-            }
-            
-            @Override
-            public Position getLastPosition(long deviceId) {
-                return null;
-            }
-            
-            @Override
-            public boolean isLatestPosition(Position position) {
-                return true;
-            }
-
-        });
-    }
+public class ProtocolTest extends BaseTest {
 
     protected Position position(String time, boolean valid, double lat, double lon) throws ParseException {
 
@@ -96,7 +63,7 @@ public class ProtocolTest {
     }
 
     protected ChannelBuffer buffer(String... data) {
-        return ChannelBuffers.copiedBuffer(concatenateStrings(data), StandardCharsets.US_ASCII);
+        return ChannelBuffers.copiedBuffer(concatenateStrings(data), StandardCharsets.ISO_8859_1);
     }
 
     protected DefaultHttpRequest request(String url) {
@@ -169,7 +136,9 @@ public class ProtocolTest {
             if (expected != null) {
 
                 if (expected.getFixTime() != null) {
-                    Assert.assertEquals("time", expected.getFixTime(), position.getFixTime());
+                    DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                    Assert.assertEquals("time", dateFormat.format(expected.getFixTime()), dateFormat.format(position.getFixTime()));
                 }
                 Assert.assertEquals("valid", expected.getValid(), position.getValid());
                 Assert.assertEquals("latitude", expected.getLatitude(), position.getLatitude(), 0.00001);
@@ -184,6 +153,9 @@ public class ProtocolTest {
 
                 Assert.assertTrue("latitude >= -90", position.getLatitude() >= -90);
                 Assert.assertTrue("latitude <= 90", position.getLatitude() <= 90);
+
+                Assert.assertTrue("longitude >= -180", position.getLongitude() >= -180);
+                Assert.assertTrue("longitude <= 180", position.getLongitude() <= 180);
 
             }
 
@@ -206,16 +178,13 @@ public class ProtocolTest {
             Assert.assertFalse("no attributes", attributes.isEmpty());
         }
 
-        if (attributes.containsKey(Position.KEY_LAC) || attributes.containsKey(Position.KEY_CID)) {
-            checkInteger(attributes.get(Position.KEY_LAC), 1, 65535);
-            checkInteger(attributes.get(Position.KEY_CID), 0, 268435455);
-        }
-
-        if (attributes.containsKey(Position.KEY_MCC) || attributes.containsKey(Position.KEY_MNC)) {
-            checkInteger(attributes.get(Position.KEY_MCC), 100, 999);
-            checkInteger(attributes.get(Position.KEY_MNC), 0, 999);
-            Assert.assertTrue("value missing", attributes.containsKey(Position.KEY_LAC));
-            Assert.assertTrue("value missing", attributes.containsKey(Position.KEY_CID));
+        if (position.getNetwork() != null && position.getNetwork().getCellTowers() != null) {
+            for (CellTower cellTower : position.getNetwork().getCellTowers()) {
+                checkInteger(cellTower.getMobileCountryCode(), 0, 999);
+                checkInteger(cellTower.getMobileNetworkCode(), 0, 999);
+                checkInteger(cellTower.getLocationAreaCode(), 1, 65535);
+                checkInteger(cellTower.getCellId(), 0, 268435455);
+            }
         }
 
     }

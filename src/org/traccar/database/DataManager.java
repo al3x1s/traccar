@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2017 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 
@@ -38,6 +37,8 @@ import liquibase.resource.ResourceAccessor;
 import org.traccar.Config;
 import org.traccar.helper.Log;
 import org.traccar.model.AttributeAlias;
+import org.traccar.model.Calendar;
+import org.traccar.model.CalendarPermission;
 import org.traccar.model.Device;
 import org.traccar.model.DevicePermission;
 import org.traccar.model.Event;
@@ -50,6 +51,7 @@ import org.traccar.model.Position;
 import org.traccar.model.Server;
 import org.traccar.model.Statistics;
 import org.traccar.model.User;
+import org.traccar.model.UserPermission;
 import org.traccar.model.DeviceGeofence;
 import org.traccar.model.GeofencePermission;
 
@@ -158,12 +160,6 @@ public class DataManager {
     public Collection<User> getUsers() throws SQLException {
         return QueryBuilder.create(dataSource, getQuery("database.selectUsersAll"))
                 .executeQuery(User.class);
-    }
-
-    public User getUser(long userId) throws SQLException {
-        return QueryBuilder.create(dataSource, getQuery("database.selectUser"))
-                .setLong("id", userId)
-                .executeQuerySingle(User.class);
     }
 
     public void addUser(User user) throws SQLException {
@@ -287,6 +283,12 @@ public class DataManager {
                 .executeQuery(Position.class);
     }
 
+    public Position getPosition(long positionId) throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectPosition"))
+                .setLong("id", positionId)
+                .executeQuerySingle(Position.class);
+    }
+
     public void addPosition(Position position) throws SQLException {
         position.setId(QueryBuilder.create(dataSource, getQuery("database.insertPosition"), true)
                 .setDate("now", new Date())
@@ -338,31 +340,17 @@ public class DataManager {
                 .executeUpdate());
     }
 
-    public Collection<Event> getEvents(long deviceId, String type, Date from, Date to) throws SQLException {
+    public Collection<Event> getEvents(long deviceId, Date from, Date to) throws SQLException {
         return QueryBuilder.create(dataSource, getQuery("database.selectEvents"))
                 .setLong("deviceId", deviceId)
-                .setString("type", type)
                 .setDate("from", from)
                 .setDate("to", to)
                 .executeQuery(Event.class);
     }
 
-    public Collection<Event> getLastEvents(long deviceId, String type, int interval) throws SQLException {
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.SECOND, -interval);
-        Date from = calendar.getTime();
-        return getEvents(deviceId, type, from, new Date());
-    }
-
     public Collection<Geofence> getGeofences() throws SQLException {
         return QueryBuilder.create(dataSource, getQuery("database.selectGeofencesAll"))
                 .executeQuery(Geofence.class);
-    }
-
-    public Geofence getGeofence(long geofenceId) throws SQLException {
-        return QueryBuilder.create(dataSource, getQuery("database.selectGeofences"))
-                .setLong("id", geofenceId)
-                .executeQuerySingle(Geofence.class);
     }
 
     public void addGeofence(Geofence geofence) throws SQLException {
@@ -486,8 +474,10 @@ public class DataManager {
                 .executeUpdate();
     }
 
-    public Collection<Statistics> getStatistics() throws SQLException {
+    public Collection<Statistics> getStatistics(Date from, Date to) throws SQLException {
         return QueryBuilder.create(dataSource, getQuery("database.selectStatistics"))
+                .setDate("from", from)
+                .setDate("to", to)
                 .executeQuery(Statistics.class);
     }
 
@@ -504,4 +494,64 @@ public class DataManager {
                 .executeUpdate();
     }
 
+    public Collection<Calendar> getCalendars() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectCalendarsAll"))
+                .executeQuery(Calendar.class);
+    }
+
+    public void addCalendar(Calendar calendar) throws SQLException {
+        calendar.setId(QueryBuilder.create(dataSource, getQuery("database.insertCalendar"), true)
+                .setObject(calendar)
+                .executeUpdate());
+    }
+
+    public void updateCalendar(Calendar calendar) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.updateCalendar"))
+                .setObject(calendar)
+                .executeUpdate();
+    }
+
+    public void removeCalendar(long calendarId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.deleteCalendar"))
+                .setLong("id", calendarId)
+                .executeUpdate();
+    }
+
+    public Collection<CalendarPermission> getCalendarPermissions() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectCalendarPermissions"))
+                .executeQuery(CalendarPermission.class);
+    }
+
+    public void linkCalendar(long userId, long calendarId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.linkCalendar"))
+                .setLong("userId", userId)
+                .setLong("calendarId", calendarId)
+                .executeUpdate();
+    }
+
+    public void unlinkCalendar(long userId, long calendarId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.unlinkCalendar"))
+                .setLong("userId", userId)
+                .setLong("calendarId", calendarId)
+                .executeUpdate();
+    }
+
+    public Collection<UserPermission> getUserPermissions() throws SQLException {
+        return QueryBuilder.create(dataSource, getQuery("database.selectUserPermissions"))
+                .executeQuery(UserPermission.class);
+    }
+
+    public void linkUser(long userId, long managedUserId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.linkUser"))
+                .setLong("userId", userId)
+                .setLong("managedUserId", managedUserId)
+                .executeUpdate();
+    }
+
+    public void unlinkUser(long userId, long managedUserId) throws SQLException {
+        QueryBuilder.create(dataSource, getQuery("database.unlinkUser"))
+                .setLong("userId", userId)
+                .setLong("managedUserId", managedUserId)
+                .executeUpdate();
+    }
 }

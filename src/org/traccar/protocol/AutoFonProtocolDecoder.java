@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2016 Anton Tananaev (anton@traccar.org)
  * Copyright 2015 Vitaly Litvak (vitavaque@gmail.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ public class AutoFonProtocolDecoder extends BaseProtocolDecoder {
         }
 
         position.set(Position.PREFIX_TEMP + 1, buf.readByte());
-        position.set(Position.KEY_GSM, buf.readUnsignedByte());
+        position.set(Position.KEY_RSSI, buf.readUnsignedByte());
         buf.readUnsignedShort(); // mcc
         buf.readUnsignedShort(); // mnc
         buf.readUnsignedShort(); // lac

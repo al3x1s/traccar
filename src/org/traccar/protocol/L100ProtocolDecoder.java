@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.traccar.DeviceSession;
 import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -106,11 +108,10 @@ public class L100ProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_ODOMETER, parser.nextDouble());
         position.set(Position.PREFIX_TEMP + 1, parser.nextDouble());
         position.set(Position.KEY_BATTERY, parser.nextDouble());
-        position.set(Position.KEY_GSM, parser.nextInt());
-        position.set(Position.KEY_MCC, parser.nextInt());
-        position.set(Position.KEY_MNC, parser.nextInt());
-        position.set(Position.KEY_LAC, parser.nextInt());
-        position.set(Position.KEY_CID, parser.nextInt());
+
+        int rssi = parser.nextInt();
+        position.setNetwork(new Network(CellTower.from(
+                parser.nextInt(), parser.nextInt(), parser.nextInt(), parser.nextInt(), rssi)));
 
         return position;
     }

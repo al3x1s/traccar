@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ public class WatchProtocol extends BaseProtocol {
         super("watch");
         setSupportedCommands(
                 Command.TYPE_POSITION_SINGLE,
+                Command.TYPE_POSITION_PERIODIC,
                 Command.TYPE_SOS_NUMBER,
                 Command.TYPE_ALARM_SOS,
                 Command.TYPE_ALARM_BATTERY,
@@ -40,7 +41,9 @@ public class WatchProtocol extends BaseProtocol {
                 Command.TYPE_SILENCE_TIME,
                 Command.TYPE_ALARM_CLOCK,
                 Command.TYPE_SET_PHONEBOOK,
-                Command.TYPE_VOICE_MESSAGE);
+                Command.TYPE_VOICE_MESSAGE,
+                Command.TYPE_SET_TIMEZONE,
+                Command.TYPE_SET_INDICATOR);
     }
 
     @Override

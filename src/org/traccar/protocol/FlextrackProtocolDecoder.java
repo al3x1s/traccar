@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -121,16 +123,18 @@ public class FlextrackProtocolDecoder extends BaseProtocolDecoder {
 
             position.set(Position.KEY_SATELLITES, parser.nextInt());
             position.set(Position.KEY_BATTERY, parser.nextInt());
-            position.set(Position.KEY_GSM, parser.nextInt());
+            position.set(Position.KEY_RSSI, parser.nextInt());
             position.set(Position.KEY_STATUS, parser.nextInt(16));
-            position.set(Position.KEY_MCC, parser.nextInt());
-            position.set(Position.KEY_MNC, parser.nextInt());
+
+            int mcc = parser.nextInt();
+            int mnc = parser.nextInt();
 
             position.setAltitude(parser.nextInt());
 
             position.set(Position.KEY_HDOP, parser.nextInt() * 0.1);
-            position.set(Position.KEY_CID, parser.nextInt(16));
-            position.set(Position.KEY_LAC, parser.nextInt(16));
+
+            position.setNetwork(new Network(CellTower.from(mcc, mnc, parser.nextInt(16), parser.nextInt(16))));
+
             position.set(Position.KEY_ODOMETER, parser.nextInt());
 
             return position;

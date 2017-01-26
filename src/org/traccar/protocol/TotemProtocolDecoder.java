@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2013 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -138,9 +140,11 @@ public class TotemProtocolDecoder extends BaseProtocolDecoder {
             .number("(dd)")                      // external power
             .number("(dddd)")                    // adc 1
             .groupBegin()
+            .groupBegin()
             .number("(dddd)")                    // adc 2
             .number("(dddd)")                    // adc 3
             .number("(dddd)")                    // adc 4
+            .groupEnd("?")
             .number("(dddd)")                    // temperature 1
             .number("(dddd)")                    // temperature 2
             .groupEnd("?")
@@ -247,8 +251,7 @@ public class TotemProtocolDecoder extends BaseProtocolDecoder {
             int lac = parser.nextInt(16);
             int cid = parser.nextInt(16);
             if (lac != 0 && cid != 0) {
-                position.set(Position.KEY_LAC, lac);
-                position.set(Position.KEY_CID, cid);
+                position.setNetwork(new Network(CellTower.fromLacCid(lac, cid)));
             }
 
             position.set(Position.PREFIX_TEMP + 1, parser.next());
@@ -270,8 +273,9 @@ public class TotemProtocolDecoder extends BaseProtocolDecoder {
             position.set(Position.PREFIX_ADC + 2, parser.next());
             position.set(Position.PREFIX_TEMP + 1, parser.next());
             position.set(Position.PREFIX_TEMP + 2, parser.next());
-            position.set(Position.KEY_LAC, parser.nextInt(16));
-            position.set(Position.KEY_CID, parser.nextInt(16));
+
+            position.setNetwork(new Network(
+                    CellTower.fromLacCid(parser.nextInt(16), parser.nextInt(16))));
 
             position.setValid(parser.next().equals("A"));
             position.set(Position.KEY_SATELLITES, parser.next());
@@ -305,10 +309,11 @@ public class TotemProtocolDecoder extends BaseProtocolDecoder {
             position.set(Position.PREFIX_TEMP + 1, parser.next());
             position.set(Position.PREFIX_TEMP + 2, parser.next());
 
-            position.set(Position.KEY_LAC, parser.nextInt(16));
-            position.set(Position.KEY_CID, parser.nextInt(16));
+            position.setNetwork(new Network(
+                    CellTower.fromLacCid(parser.nextInt(16), parser.nextInt(16))));
+
             position.set(Position.KEY_SATELLITES, parser.nextInt());
-            position.set(Position.KEY_GSM, parser.nextInt());
+            position.set(Position.KEY_RSSI, parser.nextInt());
 
             position.setCourse(parser.nextDouble());
             position.setSpeed(UnitsConverter.knotsFromKph(parser.nextDouble()));

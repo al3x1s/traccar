@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 - 2014 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2013 - 2014 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class ApelProtocolDecoder extends BaseProtocolDecoder {
                 if (subtype == MSG_STATE_FULL_INFO_T104) {
 
                     position.set(Position.KEY_SATELLITES, buf.readUnsignedByte());
-                    position.set(Position.KEY_GSM, buf.readUnsignedByte());
+                    position.set(Position.KEY_RSSI, buf.readUnsignedByte());
                     position.set(Position.KEY_EVENT, buf.readUnsignedShort());
                     position.set(Position.KEY_ODOMETER, buf.readUnsignedInt());
                     position.set(Position.KEY_INPUT, buf.readUnsignedByte());

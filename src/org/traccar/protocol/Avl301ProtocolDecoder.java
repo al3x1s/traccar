@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import org.jboss.netty.channel.Channel;
 import org.traccar.BaseProtocolDecoder;
 import org.traccar.DeviceSession;
 import org.traccar.helper.DateBuilder;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -121,8 +123,9 @@ public class Avl301ProtocolDecoder extends BaseProtocolDecoder {
                 position.set("acc", (union & 0x8000) != 0);
             }
 
-            position.set(Position.KEY_LAC, buf.readUnsignedShort());
-            position.set(Position.KEY_CID, buf.readUnsignedMedium());
+            position.setNetwork(new Network(
+                    CellTower.fromLacCid(buf.readUnsignedShort(), buf.readUnsignedMedium())));
+
             position.set(Position.KEY_ALARM, Position.ALARM_GENERAL);
             int flags = buf.readUnsignedByte();
             position.set("acc", (flags & 0x2) != 0);
@@ -130,7 +133,7 @@ public class Avl301ProtocolDecoder extends BaseProtocolDecoder {
             // parse other flags
 
             position.set(Position.KEY_POWER, buf.readUnsignedByte());
-            position.set(Position.KEY_GSM, buf.readUnsignedByte());
+            position.set(Position.KEY_RSSI, buf.readUnsignedByte());
 
             return position;
         }

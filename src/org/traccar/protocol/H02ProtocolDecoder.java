@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2017 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.traccar.helper.BitUtil;
 import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -64,19 +66,18 @@ public class H02ProtocolDecoder extends BaseProtocolDecoder {
     }
 
     private void processStatus(Position position, long status) {
-        if (!BitUtil.check(status, 0) || !BitUtil.check(status, 1)
-                || !BitUtil.check(status, 2)) {
 
-            if (!BitUtil.check(status, 0)) {
-                position.set(Position.KEY_ALARM, Position.ALARM_VIBRATION);
-            } else if (!BitUtil.check(status, 1)) {
-                position.set(Position.KEY_ALARM, Position.ALARM_SOS);
-            } else if (!BitUtil.check(status, 2)) {
-                position.set(Position.KEY_ALARM, Position.ALARM_OVERSPEED);
-            }
+        if (!BitUtil.check(status, 0)) {
+            position.set(Position.KEY_ALARM, Position.ALARM_VIBRATION);
+        } else if (!BitUtil.check(status, 1)) {
+            position.set(Position.KEY_ALARM, Position.ALARM_SOS);
+        } else if (!BitUtil.check(status, 2)) {
+            position.set(Position.KEY_ALARM, Position.ALARM_OVERSPEED);
         }
-        position.set(Position.KEY_IGNITION, BitUtil.check(status, 10));
+
+        position.set(Position.KEY_IGNITION, !BitUtil.check(status, 10));
         position.set(Position.KEY_STATUS, status);
+
     }
 
     private String decodeBattery(int value) {
@@ -167,6 +168,28 @@ public class H02ProtocolDecoder extends BaseProtocolDecoder {
             .number("(?:(dd)(dd)(dd))?,")        // date (ddmmyy)
             .any()
             .number("(x{8})")                    // status
+            .groupBegin()
+            .number(", *(x+),")                  // mcc
+            .number(" *(x+),")                   // mnc
+            .number(" *(x+),")                   // lac
+            .number(" *(x+)")                    // cid
+            .groupEnd("?")
+            .any()
+            .compile();
+
+    private static final Pattern PATTERN_NBR = new PatternBuilder()
+            .text("*")
+            .expression("..,")                   // manufacturer
+            .number("(d+),")                     // imei
+            .text("NBR,")
+            .number("(dd)(dd)(dd),")             // time
+            .number("(d+),")                     // mcc
+            .number("(d+),")                     // mnc
+            .number("d+,")                       // gsm delay time
+            .number("d+,")                       // count
+            .number("((?:d+,d+,d+,)+)")          // cells
+            .number("(dd)(dd)(dd),")             // date (ddmmyy)
+            .number("(x{8})")                    // status
             .any()
             .compile();
 
@@ -177,13 +200,13 @@ public class H02ProtocolDecoder extends BaseProtocolDecoder {
             return null;
         }
 
-        Position position = new Position();
-        position.setProtocol(getProtocolName());
-
         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, parser.next());
         if (deviceSession == null) {
             return null;
         }
+
+        Position position = new Position();
+        position.setProtocol(getProtocolName());
         position.setDeviceId(deviceSession.getDeviceId());
 
         DateBuilder dateBuilder = new DateBuilder();
@@ -224,6 +247,46 @@ public class H02ProtocolDecoder extends BaseProtocolDecoder {
         return position;
     }
 
+    private Position decodeLbs(String sentence, Channel channel, SocketAddress remoteAddress) {
+
+        Parser parser = new Parser(PATTERN_NBR, sentence);
+        if (!parser.matches()) {
+            return null;
+        }
+
+        DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, parser.next());
+        if (deviceSession == null) {
+            return null;
+        }
+
+        Position position = new Position();
+        position.setProtocol(getProtocolName());
+        position.setDeviceId(deviceSession.getDeviceId());
+
+        DateBuilder dateBuilder = new DateBuilder()
+                .setTime(parser.nextInt(), parser.nextInt(), parser.nextInt());
+
+        Network network = new Network();
+        int mcc = parser.nextInt();
+        int mnc = parser.nextInt();
+
+        String[] cells = parser.next().split(",");
+        for (int i = 0; i < cells.length / 3; i++) {
+            network.addCellTower(CellTower.from(mcc, mnc, Integer.parseInt(cells[i * 3]),
+                    Integer.parseInt(cells[i * 3 + 1]), Integer.parseInt(cells[i * 3 + 2])));
+        }
+
+        position.setNetwork(network);
+
+        dateBuilder.setDateReverse(parser.nextInt(), parser.nextInt(), parser.nextInt());
+
+        getLastLocation(position, dateBuilder.getDate());
+
+        processStatus(position, parser.nextLong(16));
+
+        return position;
+    }
+
     @Override
     protected Object decode(
             Channel channel, SocketAddress remoteAddress, Object msg) throws Exception {
@@ -231,15 +294,20 @@ public class H02ProtocolDecoder extends BaseProtocolDecoder {
         ChannelBuffer buf = (ChannelBuffer) msg;
         String marker = buf.toString(0, 1, StandardCharsets.US_ASCII);
 
-        // handle X mode?
-
-        if (marker.equals("*")) {
-            return decodeText(buf.toString(StandardCharsets.US_ASCII), channel, remoteAddress);
-        } else if (marker.equals("$")) {
-            return decodeBinary(buf, channel, remoteAddress);
+        switch (marker) {
+            case "*":
+                String sentence = buf.toString(StandardCharsets.US_ASCII);
+                if (sentence.contains(",NBR,")) {
+                    return decodeLbs(sentence, channel, remoteAddress);
+                } else {
+                    return decodeText(sentence, channel, remoteAddress);
+                }
+            case "$":
+                return decodeBinary(buf, channel, remoteAddress);
+            case "X":
+            default:
+                return null;
         }
-
-        return null;
     }
 
 }

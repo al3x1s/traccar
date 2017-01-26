@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package org.traccar.events;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.traccar.BaseEventHandler;
 import org.traccar.Context;
@@ -45,10 +45,9 @@ public class OverspeedEventHandler extends BaseEventHandler {
             return null;
         }
 
-        Collection<Event> events = new ArrayList<>();
         double speed = position.getSpeed();
         double speedLimit = Context.getDeviceManager()
-                .lookupServerDouble(device.getId(), ATTRIBUTE_SPEED_LIMIT, 0);
+                .lookupAttributeDouble(device.getId(), ATTRIBUTE_SPEED_LIMIT, 0, false);
         if (speedLimit == 0) {
             return null;
         }
@@ -60,9 +59,12 @@ public class OverspeedEventHandler extends BaseEventHandler {
             }
         }
         if (speed > speedLimit && oldSpeed <= speedLimit) {
-            events.add(new Event(Event.TYPE_DEVICE_OVERSPEED, position.getDeviceId(), position.getId()));
+            Event event = new Event(Event.TYPE_DEVICE_OVERSPEED, position.getDeviceId(), position.getId());
+            event.set("speed", speed);
+            event.set(ATTRIBUTE_SPEED_LIMIT, speedLimit);
+            return Collections.singleton(event);
         }
-        return events;
+        return null;
     }
 
 }

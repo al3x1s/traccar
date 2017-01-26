@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2012 - 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -113,7 +115,7 @@ public class MeitrackProtocolDecoder extends BaseProtocolDecoder {
         position.setValid(parser.next().equals("A"));
 
         position.set(Position.KEY_SATELLITES, parser.next());
-        position.set(Position.KEY_GSM, parser.next());
+        position.set(Position.KEY_RSSI, parser.next());
 
         position.setSpeed(UnitsConverter.knotsFromKph(parser.nextDouble()));
         position.setCourse(parser.nextDouble());
@@ -124,10 +126,10 @@ public class MeitrackProtocolDecoder extends BaseProtocolDecoder {
 
         position.set(Position.KEY_ODOMETER, parser.next());
         position.set("runtime", parser.next());
-        position.set(Position.KEY_MCC, parser.nextInt());
-        position.set(Position.KEY_MNC, parser.nextInt());
-        position.set(Position.KEY_LAC, parser.nextInt(16));
-        position.set(Position.KEY_CID, parser.nextInt(16));
+
+        position.setNetwork(new Network(
+                CellTower.from(parser.nextInt(), parser.nextInt(), parser.nextInt(16), parser.nextInt(16))));
+
         position.set(Position.KEY_STATUS, parser.next());
 
         for (int i = 1; i <= 3; i++) {
@@ -198,7 +200,7 @@ public class MeitrackProtocolDecoder extends BaseProtocolDecoder {
             position.setValid(buf.readUnsignedByte() == 1);
 
             position.set(Position.KEY_SATELLITES, buf.readUnsignedByte());
-            position.set(Position.KEY_GSM, buf.readUnsignedByte());
+            position.set(Position.KEY_RSSI, buf.readUnsignedByte());
 
             position.setSpeed(UnitsConverter.knotsFromKph(buf.readUnsignedShort()));
             position.setCourse(buf.readUnsignedShort());
@@ -209,10 +211,11 @@ public class MeitrackProtocolDecoder extends BaseProtocolDecoder {
 
             position.set(Position.KEY_ODOMETER, buf.readUnsignedInt());
             position.set("runtime", buf.readUnsignedInt());
-            position.set(Position.KEY_MCC, buf.readUnsignedShort());
-            position.set(Position.KEY_MNC, buf.readUnsignedShort());
-            position.set(Position.KEY_LAC, buf.readUnsignedShort());
-            position.set(Position.KEY_CID, buf.readUnsignedShort());
+
+            position.setNetwork(new Network(CellTower.from(
+                    buf.readUnsignedShort(), buf.readUnsignedShort(),
+                    buf.readUnsignedShort(), buf.readUnsignedShort())));
+
             position.set(Position.KEY_STATUS, buf.readUnsignedShort());
 
             position.set(Position.PREFIX_ADC + 1, buf.readUnsignedShort());

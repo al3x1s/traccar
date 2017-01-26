@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 - 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 - 2017 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import org.traccar.helper.DateBuilder;
 import org.traccar.helper.Parser;
 import org.traccar.helper.PatternBuilder;
 import org.traccar.helper.UnitsConverter;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 import org.traccar.model.Position;
 
 import java.net.SocketAddress;
@@ -67,13 +69,13 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
             .groupEnd()
             .groupBegin()
             .text("GSM:")
-            .number("d+;")                       // registration
-            .number("d+;")                       // gsm signal
+            .number("d*;")                       // registration
+            .number("d*;")                       // gsm signal
             .number("(d+);")                     // mcc
             .number("(d+);")                     // mnc
             .number("(x+);")                     // lac
             .number("(x+);")                     // cid
-            .number("-d+")                       // rssi
+            .number("(-d+)")                     // rssi
             .expression("[^,]*,?")
             .groupEnd("?")
             .groupBegin()
@@ -84,19 +86,20 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
             .groupEnd("?")
             .groupBegin()
             .text("ADC:")
-            .number("(d+.d+);")                  // power
-            .number("(d+.d+),?")                 // battery
+            .number("(d+.d+)")                   // power
+            .number("(?:;(d+.d+))?,?")           // battery
             .groupEnd("?")
             .groupBegin()
             .text("DTT:")
             .number("(x+);")                     // status
-            .expression("[^;]*;")
-            .number("x+;")                       // geo-fence 0-119
-            .number("x+;")                       // geo-fence 120-155
-            .number("x+,?")                      // event status
+            .number("(x+)?;")                    // io
+            .number("(x+);")                     // geo-fence 0-119
+            .number("(x+);")                     // geo-fence 120-155
+            .number("(x+)")                      // event status
+            .number("(?:;(x+))?,?")              // packet type
             .groupEnd("?")
             .groupBegin()
-            .text("ETD:").expression("[^,]*,?")
+            .text("ETD:").expression("([^,]+),?")
             .groupEnd("?")
             .groupBegin()
             .text("OBD:")
@@ -107,6 +110,9 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
             .groupEnd("?")
             .groupBegin()
             .text("TRU:").expression("[^,]*,?")
+            .groupEnd("?")
+            .groupBegin()
+            .text("TAG:").expression("([^,]+),?")
             .groupEnd("?")
             .compile();
 
@@ -122,7 +128,7 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
             .number("([EW])(d+.d+);")            // longitude
             .number("(d+)?;")                    // speed
             .number("(d+);")                     // course
-            .number("(d+.?d*)").optional()        // hdop
+            .number("(d+.?d*)").optional()       // hdop
             .number("(dd)(dd)(dd)")              // date
             .any()
             .compile();
@@ -150,11 +156,9 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
 
         position.set(Position.KEY_HDOP, parser.next());
 
-        if (parser.hasNext(4)) {
-            position.set(Position.KEY_MCC, parser.nextInt());
-            position.set(Position.KEY_MNC, parser.nextInt());
-            position.set(Position.KEY_LAC, parser.nextInt(16));
-            position.set(Position.KEY_CID, parser.nextInt(16));
+        if (parser.hasNext(5)) {
+            position.setNetwork(new Network(CellTower.from(
+                    parser.nextInt(), parser.nextInt(), parser.nextInt(16), parser.nextInt(16), parser.nextInt())));
         }
         if (parser.hasNext()) {
             position.set(Position.KEY_ODOMETER, parser.nextInt());
@@ -162,14 +166,26 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
         position.set(Position.KEY_POWER, parser.next());
         position.set(Position.KEY_BATTERY, parser.next());
 
-        String status = parser.next();
-        if (status != null) {
-            position.set(Position.KEY_IGNITION, BitUtil.check(Integer.parseInt(status, 16), 13));
+        if (parser.hasNext(6)) {
+            long status = parser.nextLong(16);
+            position.set(Position.KEY_IGNITION, BitUtil.check(status, 13));
             position.set(Position.KEY_STATUS, status);
+            position.set("ioStatus", parser.next());
+            position.set(Position.KEY_GEOFENCE, parser.next() + parser.next());
+            position.set("eventStatus", parser.next());
+            position.set("packetType", parser.next());
+        }
+
+        if (parser.hasNext()) {
+            position.set("eventData", parser.next());
         }
 
         if (parser.hasNext()) {
             position.set("obd", parser.next());
+        }
+
+        if (parser.hasNext()) {
+            position.set("tagData", parser.next());
         }
 
         return position;
@@ -211,7 +227,7 @@ public class GoSafeProtocolDecoder extends BaseProtocolDecoder {
             position.setValid(parser.next().equals("A"));
             position.setLatitude(parser.nextCoordinate(Parser.CoordinateFormat.HEM_DEG));
             position.setLongitude(parser.nextCoordinate(Parser.CoordinateFormat.HEM_DEG));
-            position.setSpeed(parser.nextDouble());
+            position.setSpeed(UnitsConverter.knotsFromKph(parser.nextDouble()));
             position.setCourse(parser.nextDouble());
 
             position.set(Position.KEY_HDOP, parser.next());

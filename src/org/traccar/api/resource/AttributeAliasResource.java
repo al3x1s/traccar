@@ -1,6 +1,6 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
- * Copyright 2016 Andrey Kunitsyn (abyss@fox5.ru)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
+ * Copyright 2016 Andrey Kunitsyn (andrey@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class AttributeAliasResource extends BaseResource {
     @POST
     public Response add(AttributeAlias entity) throws SQLException {
         Context.getPermissionsManager().checkReadonly(getUserId());
+        Context.getPermissionsManager().checkDeviceReadonly(getUserId());
         if (!Context.getPermissionsManager().isAdmin(getUserId())) {
             Context.getPermissionsManager().checkDevice(getUserId(), entity.getDeviceId());
         }
@@ -64,8 +65,9 @@ public class AttributeAliasResource extends BaseResource {
 
     @Path("{id}")
     @PUT
-    public Response update(@PathParam("id") long id, AttributeAlias entity) throws SQLException {
+    public Response update(AttributeAlias entity) throws SQLException {
         Context.getPermissionsManager().checkReadonly(getUserId());
+        Context.getPermissionsManager().checkDeviceReadonly(getUserId());
         if (!Context.getPermissionsManager().isAdmin(getUserId())) {
             AttributeAlias oldEntity = Context.getAliasesManager().getAttributeAlias(entity.getId());
             Context.getPermissionsManager().checkDevice(getUserId(), oldEntity.getDeviceId());
@@ -79,6 +81,7 @@ public class AttributeAliasResource extends BaseResource {
     @DELETE
     public Response remove(@PathParam("id") long id) throws SQLException {
         Context.getPermissionsManager().checkReadonly(getUserId());
+        Context.getPermissionsManager().checkDeviceReadonly(getUserId());
         if (!Context.getPermissionsManager().isAdmin(getUserId())) {
             AttributeAlias entity = Context.getAliasesManager().getAttributeAlias(id);
             Context.getPermissionsManager().checkDevice(getUserId(), entity.getDeviceId());

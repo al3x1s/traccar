@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.traccar.BaseProtocolDecoder;
+import org.traccar.Context;
 import org.traccar.DeviceSession;
 import org.traccar.helper.BitUtil;
 import org.traccar.helper.Checksum;
@@ -36,8 +37,17 @@ public class GranitProtocolDecoder extends BaseProtocolDecoder {
 
     private static final int HEADER_LENGTH = 6;
 
+    private double adc1Ratio;
+    private double adc2Ratio;
+    private double adc3Ratio;
+    private double adc4Ratio;
+
     public GranitProtocolDecoder(GranitProtocol protocol) {
         super(protocol);
+        adc1Ratio = Context.getConfig().getDouble("granit.adc1Ratio", 1);
+        adc2Ratio = Context.getConfig().getDouble("granit.adc2Ratio", 1);
+        adc3Ratio = Context.getConfig().getDouble("granit.adc3Ratio", 1);
+        adc4Ratio = Context.getConfig().getDouble("granit.adc4Ratio", 1);
     }
 
     public static void appendChecksum(ChannelBuffer buffer, int length) {
@@ -51,7 +61,7 @@ public class GranitProtocolDecoder extends BaseProtocolDecoder {
     private static void sendResponseCurrent(Channel channel, int deviceId, long time) {
         ChannelBuffer response = ChannelBuffers.dynamicBuffer(ByteOrder.LITTLE_ENDIAN, 0);
         response.writeBytes("BB+UGRC~".getBytes(StandardCharsets.US_ASCII));
-        response.writeShort(6); //binary length
+        response.writeShort(6); // length
         response.writeInt((int) time);
         response.writeShort(deviceId);
         appendChecksum(response, 16);
@@ -61,14 +71,14 @@ public class GranitProtocolDecoder extends BaseProtocolDecoder {
     private static void sendResponseArchive(Channel channel, int deviceId, int packNum) {
         ChannelBuffer response = ChannelBuffers.dynamicBuffer(ByteOrder.LITTLE_ENDIAN, 0);
         response.writeBytes("BB+ARCF~".getBytes(StandardCharsets.US_ASCII));
-        response.writeShort(4); //binary length
+        response.writeShort(4); // length
         response.writeShort(packNum);
         response.writeShort(deviceId);
         appendChecksum(response, 14);
         channel.write(response);
     }
 
-    private static void decodeStructure(ChannelBuffer buf, Position position) {
+    private void decodeStructure(ChannelBuffer buf, Position position) {
         short flags = buf.readUnsignedByte();
         position.setValid(BitUtil.check(flags, 7));
         if (BitUtil.check(flags, 1)) {
@@ -85,14 +95,19 @@ public class GranitProtocolDecoder extends BaseProtocolDecoder {
         int latDegrees = buf.readUnsignedByte();
         int lonMinutes = buf.readUnsignedShort();
         int latMinutes = buf.readUnsignedShort();
+
         double latitude = latDegrees + latMinutes / 60000.0;
         double longitude = lonDegrees + lonMinutes / 60000.0;
-        if (!BitUtil.check(flags, 4)) {
-            latitude = -latitude;
+
+        if (position.getValid()) {
+            if (!BitUtil.check(flags, 4)) {
+                latitude = -latitude;
+            }
+            if (!BitUtil.check(flags, 5)) {
+                longitude = -longitude;
+            }
         }
-        if (!BitUtil.check(flags, 5)) {
-            longitude = -longitude;
-        }
+
         position.setLongitude(longitude);
         position.setLatitude(latitude);
 
@@ -118,18 +133,18 @@ public class GranitProtocolDecoder extends BaseProtocolDecoder {
         analogIn3 = analogInHi << 4 & 0x300 | analogIn3;
         analogIn4 = analogInHi << 2 & 0x300 | analogIn4;
 
-        position.set(Position.PREFIX_ADC + 1, analogIn1);
-        position.set(Position.PREFIX_ADC + 2, analogIn2);
-        position.set(Position.PREFIX_ADC + 3, analogIn3);
-        position.set(Position.PREFIX_ADC + 4, analogIn4);
+        position.set(Position.PREFIX_ADC + 1, analogIn1 * adc1Ratio);
+        position.set(Position.PREFIX_ADC + 2, analogIn2 * adc2Ratio);
+        position.set(Position.PREFIX_ADC + 3, analogIn3 * adc3Ratio);
+        position.set(Position.PREFIX_ADC + 4, analogIn4 * adc4Ratio);
 
         position.setAltitude(buf.readUnsignedByte() * 10);
 
-        short diOut = buf.readUnsignedByte();
+        int output = buf.readUnsignedByte();
         for (int i = 0; i < 8; i++) {
-            position.set(Position.PREFIX_IO + (i + 1), BitUtil.check(diOut, i));
+            position.set(Position.PREFIX_IO + (i + 1), BitUtil.check(output, i));
         }
-        buf.skipBytes(1); //StatMess
+        buf.readUnsignedByte(); // status message buffer
     }
 
     @Override

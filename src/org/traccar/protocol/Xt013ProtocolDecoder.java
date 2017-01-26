@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Anton Tananaev (anton.tananaev@gmail.com)
+ * Copyright 2015 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class Xt013ProtocolDecoder extends BaseProtocolDecoder {
         position.setValid(parser.next().equals("F"));
 
         position.set(Position.KEY_GPS, parser.next());
-        position.set(Position.KEY_GSM, parser.next());
+        position.set(Position.KEY_RSSI, parser.next());
         position.set(Position.KEY_BATTERY, parser.next());
         position.set(Position.KEY_CHARGE, parser.next());
 

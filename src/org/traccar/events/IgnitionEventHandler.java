@@ -1,6 +1,6 @@
 /*
- * Copyright 2016 Anton Tananaev (anton.tananaev@gmail.com)
- * Copyright 2016 Andrey Kunitsyn (abyss@fox5.ru)
+ * Copyright 2016 Anton Tananaev (anton@traccar.org)
+ * Copyright 2016 Andrey Kunitsyn (andrey@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
  */
 package org.traccar.events;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.traccar.BaseEventHandler;
 import org.traccar.Context;
@@ -39,28 +39,21 @@ public class IgnitionEventHandler extends BaseEventHandler {
 
         Collection<Event> result = null;
 
-        boolean ignition = false;
-        Object ignitionObject = position.getAttributes().get(Position.KEY_IGNITION);
-        if (ignitionObject != null && ignitionObject instanceof Boolean) {
-            ignition = (Boolean) ignitionObject;
-        }
+        if (position.getAttributes().containsKey(Position.KEY_IGNITION)) {
+            boolean ignition = position.getBoolean(Position.KEY_IGNITION);
 
-        boolean oldIgnition = false;
-        Object oldIgnitionObject = null;
-        Position lastPosition = Context.getIdentityManager().getLastPosition(position.getDeviceId());
-        if (lastPosition != null) {
-            oldIgnitionObject = lastPosition.getAttributes().get(Position.KEY_IGNITION);
-        }
-        if (oldIgnitionObject != null && oldIgnitionObject instanceof Boolean) {
-            oldIgnition = (Boolean) oldIgnitionObject;
-        }
+            Position lastPosition = Context.getIdentityManager().getLastPosition(position.getDeviceId());
+            if (lastPosition != null && lastPosition.getAttributes().containsKey(Position.KEY_IGNITION)) {
+                boolean oldIgnition = lastPosition.getBoolean(Position.KEY_IGNITION);
 
-        if (ignition && !oldIgnition) {
-            result = new ArrayList<>();
-            result.add(new Event(Event.TYPE_IGNITION_ON, position.getDeviceId(), position.getId()));
-        } else if (!ignition && oldIgnition) {
-            result = new ArrayList<>();
-            result.add(new Event(Event.TYPE_IGNITION_OFF, position.getDeviceId(), position.getId()));
+                if (ignition && !oldIgnition) {
+                    result = Collections.singleton(
+                            new Event(Event.TYPE_IGNITION_ON, position.getDeviceId(), position.getId()));
+                } else if (!ignition && oldIgnition) {
+                    result = Collections.singleton(
+                            new Event(Event.TYPE_IGNITION_OFF, position.getDeviceId(), position.getId()));
+                }
+            }
         }
         return result;
     }
