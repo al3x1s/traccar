@@ -127,12 +127,19 @@ public class FilterHandler extends BaseDataHandler {
         boolean result = filterInvalid(p) || filterZero(p) || filterDuplicate(p)
                 || filterFuture(p) || filterApproximate(p) || filterDistance(p);
 
+        Object alarm = p.getAttributes().get(Position.KEY_ALARM);
+        Object commandResult = p.getAttributes().get(Position.KEY_RESULT);
+
         if (filterLimit(p)) {
             result = false;
         }
 
-        if (result) {
+        if (result && alarm == null && commandResult == null) {
             Log.info("Position filtered from " + p.getDeviceId());
+        } else if (alarm != null || commandResult != null) {
+            result = false;
+            Log.info(String.format("Position contains an alarm (%s) or command result (%s) from %s",
+                    alarm, commandResult, p.getDeviceId()));
         }
 
         return result;
@@ -140,9 +147,7 @@ public class FilterHandler extends BaseDataHandler {
 
     @Override
     protected Position handlePosition(Position position) {
-        Object alarm = position.getAttributes().get(Position.KEY_ALARM);
-        Object commandResult = position.getAttributes().get(Position.KEY_RESULT);
-        if (filter(position) && alarm == null && commandResult == null) {
+        if (filter(position)) {
             return null;
         }
         return position;

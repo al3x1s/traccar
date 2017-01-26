@@ -38,7 +38,7 @@ public class AsyncSocketServlet extends WebSocketServlet {
                     long userId = (Long) req.getSession().getAttribute(SessionResource.USER_ID_KEY);
                     return new AsyncSocket(userId);
                 } else {
-                    Log.error("req.getSession() = null");
+                    Log.error("createWebSocket -> req.getSession() = null");
                     return null;
                 }
             }

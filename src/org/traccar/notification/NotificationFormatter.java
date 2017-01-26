@@ -243,6 +243,36 @@ public final class NotificationFormatter {
         return result;
     }
 
+    public static String mainMessage(AlertLog alertLog) {
+        StringBuilder c = new StringBuilder();
+        switch (alertLog.getTypeId()) {
+            case VehicleAlert.TYPE_STOP:
+                c.append("Vehiculo se ha detenido");
+                break;
+            case VehicleAlert.TYPE_SPEED:
+                c.append("Vehiculo ha excedido el limite de velocidad");
+                break;
+            case VehicleAlert.TYPE_ODOMETER:
+                c.append(String.format("Vehiculo ha recorrido %s Km", alertLog.getOdometer()));
+                break;
+            case VehicleAlert.TYPE_GEOFENCE_ENTER:
+                c.append("Ha entrado a la geocerca:")
+                        .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
+                break;
+            case VehicleAlert.TYPE_GEOFENCE_EXIT:
+                c.append("Ha salido de la geocerca:")
+                        .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
+                break;
+            case VehicleAlert.TYPE_PANIC:
+                c.append("Vehiculo acciono el boton de panico");
+                break;
+            default:
+                c.append("Unknown type");
+                break;
+        }
+        return c.toString();
+    }
+
     public static String formatMessage(long userId, AlertLog alertLog, Position p) {
         StringBuilder c = new StringBuilder();
         try {
@@ -257,32 +287,7 @@ public final class NotificationFormatter {
             c.append("<tr><td> <b>Velocidad:</b> </td><td>").append(formatSpeed(userId, p.getSpeed()))
                     .append("</td></tr>");
             c.append("<tr><td> <b>Mensaje:</b> </td><td><font color=\"red\">");
-
-            switch (alertLog.getTypeId()) {
-                case VehicleAlert.TYPE_STOP:
-                    c.append("Vehiculo se ha detenido");
-                    break;
-                case VehicleAlert.TYPE_SPEED:
-                    c.append("Vehiculo ha excedido el limite de velocidad");
-                    break;
-                case VehicleAlert.TYPE_ODOMETER:
-                    c.append(String.format("Vehiculo ha recorrido %s Km", alertLog.getOdometer()));
-                    break;
-                case VehicleAlert.TYPE_GEOFENCE_ENTER:
-                    c.append("Ha entrado a la geocerca:")
-                            .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
-                    break;
-                case VehicleAlert.TYPE_GEOFENCE_EXIT:
-                    c.append("Ha salido de la geocerca:")
-                            .append(Context.getGeofenceManager().getGeofence(alertLog.getGeofenceId()).getName());
-                    break;
-                case VehicleAlert.TYPE_PANIC:
-                    c.append("Vehiculo acciono el boton de panico");
-                    break;
-                default:
-                    c.append("Unknown type");
-                    break;
-            }
+            c.append(mainMessage(alertLog));
             c.append("</font></td></tr></table>");
         } catch (Exception e) {
             Log.warning(e);

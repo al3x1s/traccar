@@ -24,6 +24,7 @@ import org.traccar.database.GeofenceManager;
 import org.traccar.model.AlertLog;
 import org.traccar.model.User;
 import org.traccar.model.Vehicle;
+import org.traccar.notification.NotificationFormatter;
 import org.traccar.notification.NotificationMail;
 
 /**
@@ -36,14 +37,22 @@ public class VehicleAlertHandler extends BaseDataHandler {
 
     }
 
-    private void sendNotification(Collection<User> users, AlertLog alertLog, Position position) {
-        for (User user : users) {
-            NotificationMail.sendMailAsync(user.getId(), alertLog, position);
+    private void sendNotification(long userId, AlertLog alertLog, Position position) {
+        try {
+            Log.info(String.format("Sending a notification to user: %s",
+                    userId));
+            alertLog.setDescription(NotificationFormatter.mainMessage(alertLog));
+            Context.getDataManager().addAlertlog(alertLog);
+            NotificationMail.sendMailAsync(userId, alertLog, position);
+        } catch (SQLException error) {
+            Log.warning(error);
         }
     }
 
-    private void sendNotification(long userId, AlertLog alertLog, Position position) {
-        NotificationMail.sendMailAsync(userId, alertLog, position);
+    private void sendNotification(Collection<User> users, AlertLog alertLog, Position position) {
+        for (User user : users) {
+            sendNotification(user.getId(), alertLog, position);
+        }
     }
 
     private Position getLastPosition(long deviceId) {
@@ -64,13 +73,15 @@ public class VehicleAlertHandler extends BaseDataHandler {
                 && (va.getTypeId() == VehicleAlert.TYPE_GEOFENCE_ENTER
                 || va.getTypeId() == VehicleAlert.TYPE_GEOFENCE_ENTER_EXIT)) {
             AlertLog al = new AlertLog(va.getVehicleId(), va.getAlertId(),
-                    position.getId(), VehicleAlert.TYPE_GEOFENCE_ENTER, va.getGeofenceid());
+                    position.getLatitude(), position.getLongitude(),
+                    VehicleAlert.TYPE_GEOFENCE_ENTER, va.getGeofenceid());
             sendNotification(users, al, position);
         } else if (!isIn && wasIn
                 && (va.getTypeId() == VehicleAlert.TYPE_GEOFENCE_EXIT
                 || va.getTypeId() == VehicleAlert.TYPE_GEOFENCE_ENTER_EXIT)) {
             AlertLog al = new AlertLog(va.getVehicleId(), va.getAlertId(),
-                    position.getId(), VehicleAlert.TYPE_GEOFENCE_EXIT, va.getGeofenceid());
+                    position.getLatitude(), position.getLongitude(),
+                    VehicleAlert.TYPE_GEOFENCE_EXIT, va.getGeofenceid());
             sendNotification(users, al, position);
         }
     }
@@ -79,7 +90,8 @@ public class VehicleAlertHandler extends BaseDataHandler {
         Object alarm = position.getAttributes().get(Position.KEY_ALARM);
         if (alarm != null && alarm.equals(Position.ALARM_SOS)) {
             AlertLog al = new AlertLog(va.getVehicleId(), va.getAlertId(),
-                position.getId(), VehicleAlert.TYPE_PANIC);
+                    position.getLatitude(), position.getLongitude(),
+                    VehicleAlert.TYPE_PANIC);
             sendNotification(users, al, position);
         }
     }
@@ -89,8 +101,9 @@ public class VehicleAlertHandler extends BaseDataHandler {
             Object alarm = position.getAttributes().get(Position.KEY_ALARM);
             if (alarm != null && alarm.equals(Position.ALARM_SOS)) {
                 Vehicle v = Context.getDataManager().getVehicle(position.getDeviceId());
-                AlertLog al = new AlertLog(v.getId(), 0, position.getId(), VehicleAlert.TYPE_PANIC);
-                sendNotification(2, al, position);
+                AlertLog al = new AlertLog(v.getId(), 0, position.getLatitude(), position.getLongitude(),
+                        VehicleAlert.TYPE_PANIC);
+                sendNotification(8, al, position);
             }
         } catch (SQLException error) {
             Log.warning(error);
@@ -116,7 +129,8 @@ public class VehicleAlertHandler extends BaseDataHandler {
         if (speed > speedLimit && oldSpeed <= speedLimit) {
             Log.info("alerta de velocidad aqui");
             AlertLog al = new AlertLog(va.getVehicleId(), va.getAlertId(),
-                    position.getId(), VehicleAlert.TYPE_SPEED);
+                    position.getLatitude(), position.getLongitude(),
+                    VehicleAlert.TYPE_SPEED);
             sendNotification(users, al, position);
         }
     }
@@ -134,7 +148,8 @@ public class VehicleAlertHandler extends BaseDataHandler {
             if ((totalDistance - initialOdometer) >= odometerAlert) {
                 Log.info("alerta de odometro aqui");
                 AlertLog al = new AlertLog(va.getVehicleId(), va.getAlertId(),
-                        position.getId(), VehicleAlert.TYPE_ODOMETER, totalDistance);
+                        position.getLatitude(), position.getLongitude(),
+                        VehicleAlert.TYPE_ODOMETER, totalDistance);
                 sendNotification(users, al, position);
             }
         }

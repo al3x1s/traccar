@@ -55,6 +55,7 @@ import org.traccar.model.GeofencePermission;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.traccar.model.AlertLog;
 import org.traccar.model.Vehicle;
 import org.traccar.model.VehicleAlert;
 
@@ -521,5 +522,11 @@ public class DataManager {
         return QueryBuilder.create(dataSource, getQuery("database.getUserByAlertId"))
                 .setLong("id", alertId)
                 .executeQuery(User.class);
+    }
+
+    public void addAlertlog(AlertLog alertLog) throws SQLException {
+        alertLog.setId(QueryBuilder.create(dataSource, getQuery("database.insertAlerlog"), true)
+                .setObject(alertLog)
+                .executeUpdate());
     }
 }

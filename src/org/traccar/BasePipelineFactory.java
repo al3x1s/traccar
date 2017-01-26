@@ -193,10 +193,6 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
 
         addDynamicHandlers(pipeline);
 
-        if (vehicleAlertHanlder != null) {
-            pipeline.addLast("VehicleAlertHandler", vehicleAlertHanlder);
-        }
-
         if (filterHandler != null) {
             pipeline.addLast("filter", filterHandler);
         }
@@ -241,9 +237,9 @@ public abstract class BasePipelineFactory implements ChannelPipelineFactory {
             pipeline.addLast("IgnitionEventHandler", ignitionEventHandler);
         }
 
-//        if (vehicleAlertHanlder != null) {
-//            pipeline.addLast("VehicleAlertHandler", vehicleAlertHanlder);
-//        }
+        if (vehicleAlertHanlder != null) {
+            pipeline.addLast("VehicleAlertHandler", vehicleAlertHanlder);
+        }
 
         pipeline.addLast("mainHandler", new MainEventHandler());
         return pipeline;

@@ -21,26 +21,29 @@ package org.traccar.model;
  */
 public class AlertLog {
 
-    public AlertLog(long vehicleId, long alertId, long positionId, int typeId) {
+    public AlertLog(long vehicleId, long alertId, double lat, double lon, int typeId) {
         this.vehicleId = vehicleId;
         this.alertId = alertId;
-        this.positionId = positionId;
+        this.latitude = lat;
+        this.longitude = lon;
         this.typeId = typeId;
     }
 
-    public AlertLog(long vehicleId, long alertId, long positionId, int typeId, long geofenceId) {
+    public AlertLog(long vehicleId, long alertId, double lat, double lon, int typeId, long geofenceId) {
         this.vehicleId = vehicleId;
         this.alertId = alertId;
-        this.positionId = positionId;
         this.typeId = typeId;
+        this.latitude = lat;
+        this.longitude = lon;
         this.geofenceId = geofenceId;
     }
 
-    public AlertLog(long vehicleId, long alertId, long positionId, int typeId, double odometer) {
+    public AlertLog(long vehicleId, long alertId, double lat, double lon, int typeId, double odometer) {
         this.vehicleId = vehicleId;
         this.alertId = alertId;
-        this.positionId = positionId;
         this.typeId = typeId;
+        this.latitude = lat;
+        this.longitude = lon;
         this.odometer = odometer;
     }
 
@@ -118,4 +121,32 @@ public class AlertLog {
         this.odometer = odometer;
     }
 
+    private double latitude;
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+    private double longitude;
+
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
 }
