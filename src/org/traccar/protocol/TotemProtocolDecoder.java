@@ -173,6 +173,16 @@ public class TotemProtocolDecoder extends BaseProtocolDecoder {
                 return Position.ALARM_GEOFENCE_EXIT;
             case 0x43:
                 return Position.ALARM_GEOFENCE_ENTER;
+            case 0x14:
+                return Position.ALARM_ACCELETATION;
+            case 0x15:
+                return Position.ALARM_BREAKING;
+            case 0x61:
+                return Position.ALARM_POWER_CUT;
+            case 0x54:
+                return Position.ALARM_POWER_ON;
+            case 0x55:
+                return Position.ALARM_POWER_OFF;
             default:
                 return null;
         }

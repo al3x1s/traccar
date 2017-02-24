@@ -174,8 +174,10 @@ public class FilterHandler extends BaseDataHandler {
             filterType.append("Distance ");
         }
 
-        if (filterType.length() > 0 && !filterLimit(position)) {
+        Object alarm = position.getAttributes().get(Position.KEY_ALARM);
+        Object commandResult = position.getAttributes().get(Position.KEY_RESULT);
 
+        if (filterType.length() > 0 && !filterLimit(position) && alarm == null && commandResult == null) {
             StringBuilder message = new StringBuilder();
             message.append("Position filtered by ");
             message.append(filterType.toString());
